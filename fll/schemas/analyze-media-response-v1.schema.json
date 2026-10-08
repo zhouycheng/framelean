@@ -1,0 +1,2603 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AnalyzeMediaResponse",
+  "type": "object",
+  "properties": {
+    "analysis_id": {
+      "type": "string"
+    },
+    "analysis_revision": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "capabilities": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CapabilitySet"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "configuration_options": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ConfigurationOptionGraph"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "configuration_status": {
+      "$ref": "#/$defs/ConfigurationStatus"
+    },
+    "custom_target_size": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CustomTargetSizeOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "engine_backend_summary": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EngineBackendSummary"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "environment_summary": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EnvironmentSummary"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ErrorDetail"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "media": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MediaAnalysis"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "media_analysis_status": {
+      "$ref": "#/$defs/MediaAnalysisStatus"
+    },
+    "presets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PresetDefinition"
+      }
+    },
+    "recommendation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Recommendation"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "requirements": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/InputMediaRequirements"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "source_fingerprint": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SourceFingerprintSummary"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "task_mode": {
+      "$ref": "#/$defs/TaskMode"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/WarningDetail"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "analysis_id",
+    "analysis_revision",
+    "task_mode",
+    "media_analysis_status",
+    "configuration_status",
+    "presets",
+    "warnings"
+  ],
+  "$defs": {
+    "AnimationInfo": {
+      "type": "object",
+      "properties": {
+        "duration": {
+          "$ref": "#/$defs/Observed2"
+        },
+        "frame_count": {
+          "$ref": "#/$defs/Observed4"
+        },
+        "frame_rate": {
+          "$ref": "#/$defs/Observed3"
+        }
+      },
+      "required": [
+        "frame_rate",
+        "frame_count",
+        "duration"
+      ]
+    },
+    "AudioInputRequirement": {
+      "type": "object",
+      "properties": {
+        "channel_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        },
+        "channel_layout": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "codec": {
+          "type": "string"
+        },
+        "profile": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sample_format": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sample_rate_hz": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        },
+        "stream_index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "stream_index",
+        "codec"
+      ]
+    },
+    "AudioStreamInfo": {
+      "type": "object",
+      "properties": {
+        "bitrate": {
+          "$ref": "#/$defs/Observed4"
+        },
+        "channel_count": {
+          "$ref": "#/$defs/Observed6"
+        },
+        "channel_layout": {
+          "$ref": "#/$defs/Observed"
+        },
+        "codec": {
+          "type": "string"
+        },
+        "duration": {
+          "$ref": "#/$defs/Observed2"
+        },
+        "profile": {
+          "$ref": "#/$defs/Observed"
+        },
+        "sample_format": {
+          "$ref": "#/$defs/Observed"
+        },
+        "sample_rate_hz": {
+          "$ref": "#/$defs/Observed6"
+        },
+        "stream_index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "stream_index",
+        "codec",
+        "profile",
+        "sample_rate_hz",
+        "channel_count",
+        "channel_layout",
+        "sample_format",
+        "bitrate",
+        "duration"
+      ]
+    },
+    "AuxiliaryInputRequirement": {
+      "type": "object",
+      "properties": {
+        "codec": {
+          "type": "string"
+        },
+        "stream_index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "stream_index",
+        "codec"
+      ]
+    },
+    "BackendKind": {
+      "type": "string",
+      "enum": [
+        "demuxer",
+        "decoder",
+        "processor",
+        "encoder",
+        "muxer"
+      ]
+    },
+    "BitrateCeiling": {
+      "type": "object",
+      "properties": {
+        "h264_bps": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "minimum_height": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "minimum_height",
+        "h264_bps"
+      ]
+    },
+    "CapabilityDiagnostic": {
+      "type": "object",
+      "properties": {
+        "backend_id": {
+          "type": "string"
+        },
+        "engine_ready": {
+          "type": "boolean"
+        },
+        "kind": {
+          "$ref": "#/$defs/BackendKind"
+        },
+        "native_status": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "backend_id",
+        "kind",
+        "native_status",
+        "engine_ready"
+      ]
+    },
+    "CapabilityExclusion": {
+      "type": "object",
+      "properties": {
+        "backend_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "code": {
+          "$ref": "#/$defs/EngineErrorCode"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ]
+    },
+    "CapabilitySet": {
+      "type": "object",
+      "properties": {
+        "audio_codecs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "containers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "decoders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "demuxers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapabilityDiagnostic"
+          }
+        },
+        "encoders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exclusions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapabilityExclusion"
+          }
+        },
+        "execution_chains": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExecutionChainCandidate"
+          }
+        },
+        "image_formats": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "muxers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "processors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "video_codecs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "available",
+        "containers",
+        "video_codecs",
+        "audio_codecs",
+        "image_formats",
+        "demuxers",
+        "decoders",
+        "processors",
+        "encoders",
+        "muxers",
+        "execution_chains",
+        "diagnostics",
+        "exclusions"
+      ]
+    },
+    "ConfigurationOption": {
+      "type": "object",
+      "properties": {
+        "candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "candidate_ids"
+      ]
+    },
+    "ConfigurationOption2": {
+      "type": "object",
+      "properties": {
+        "candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "value": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "value",
+        "candidate_ids"
+      ]
+    },
+    "ConfigurationOption3": {
+      "type": "object",
+      "properties": {
+        "candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "value": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "value",
+        "candidate_ids"
+      ]
+    },
+    "ConfigurationOption4": {
+      "type": "object",
+      "properties": {
+        "candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "value": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        }
+      },
+      "required": [
+        "value",
+        "candidate_ids"
+      ]
+    },
+    "ConfigurationOption5": {
+      "type": "object",
+      "properties": {
+        "candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "value": {
+          "$ref": "#/$defs/HdrMode"
+        }
+      },
+      "required": [
+        "value",
+        "candidate_ids"
+      ]
+    },
+    "ConfigurationOption6": {
+      "type": "object",
+      "properties": {
+        "candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "value": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "value",
+        "candidate_ids"
+      ]
+    },
+    "ConfigurationOptionGraph": {
+      "type": "object",
+      "properties": {
+        "audio_bitrates_bps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption2"
+          }
+        },
+        "audio_channel_counts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption3"
+          }
+        },
+        "audio_codecs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption"
+          }
+        },
+        "audio_encoders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption"
+          }
+        },
+        "audio_sample_rates_hz": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption3"
+          }
+        },
+        "bit_depths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption4"
+          }
+        },
+        "candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "containers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption"
+          }
+        },
+        "hdr_modes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption5"
+          }
+        },
+        "pixel_formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption"
+          }
+        },
+        "preserves_hdr": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption6"
+          }
+        },
+        "requires_tone_mapping": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption6"
+          }
+        },
+        "video_codecs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption"
+          }
+        },
+        "video_encoders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption"
+          }
+        },
+        "video_profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigurationOption"
+          }
+        }
+      },
+      "required": [
+        "candidate_ids",
+        "containers",
+        "video_codecs",
+        "video_profiles",
+        "audio_codecs",
+        "audio_bitrates_bps",
+        "audio_sample_rates_hz",
+        "audio_channel_counts",
+        "video_encoders",
+        "audio_encoders",
+        "pixel_formats",
+        "bit_depths",
+        "hdr_modes",
+        "preserves_hdr",
+        "requires_tone_mapping"
+      ]
+    },
+    "ConfigurationStatus": {
+      "type": "string",
+      "enum": [
+        "available",
+        "unavailable",
+        "not_evaluated"
+      ]
+    },
+    "CustomTargetSizeOptions": {
+      "type": "object",
+      "properties": {
+        "available": {
+          "type": "boolean"
+        },
+        "default_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "display_unit": {
+          "type": "string"
+        },
+        "maximum_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "minimum_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "step_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "unavailable_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "available",
+        "display_unit"
+      ]
+    },
+    "DataStreamInfo": {
+      "type": "object",
+      "properties": {
+        "codec": {
+          "type": "string"
+        },
+        "stream_index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "stream_index",
+        "codec"
+      ]
+    },
+    "EngineBackendSummary": {
+      "type": "object",
+      "properties": {
+        "backend_count": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0
+        },
+        "catalog_revision": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "execution_ready_backend_count": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0
+        },
+        "native_backend_count": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0
+        },
+        "plugin_backend_count": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0
+        },
+        "registered_backend_count": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "catalog_revision",
+        "backend_count",
+        "native_backend_count",
+        "plugin_backend_count",
+        "registered_backend_count",
+        "execution_ready_backend_count"
+      ]
+    },
+    "EngineErrorCode": {
+      "type": "string",
+      "enum": [
+        "INVALID_IDENTIFIER",
+        "INVALID_TASK_STATE",
+        "INVALID_ARGUMENT",
+        "INTERNAL_MEDIA_ERROR",
+        "INTERNAL_PROCESSOR_ERROR",
+        "INTERNAL_PIPELINE_ERROR",
+        "INTERNAL_PLUGIN_ERROR",
+        "INTERNAL_RUNTIME_ERROR",
+        "INTERNAL_ANALYSIS_ERROR",
+        "INTERNAL_ENVIRONMENT_ERROR",
+        "INTERNAL_NATIVE_LIBRARY_ERROR",
+        "INTERNAL_CAPABILITY_ERROR",
+        "INTERNAL_RECOMMENDATION_ERROR",
+        "INTERNAL_ESTIMATION_ERROR",
+        "INTERNAL_SNAPSHOT_ERROR",
+        "MEDIA_FILE_NOT_FOUND",
+        "MEDIA_PERMISSION_DENIED",
+        "MEDIA_INVALID_FORMAT",
+        "MEDIA_INFO_READ_FAILED",
+        "NATIVE_LIBRARY_UNAVAILABLE",
+        "ANALYSIS_SOURCE_CHANGED",
+        "ANALYSIS_SNAPSHOT_EXPIRED",
+        "ANALYSIS_REVISION_CONFLICT",
+        "QUEUE_REVISION_CONFLICT",
+        "ENGINE_EXECUTION_CHAIN_NOT_READY",
+        "MEDIA_CAPABILITY_INCOMPATIBLE",
+        "PRESET_NOT_APPLICABLE",
+        "TARGET_SIZE_UNACHIEVABLE",
+        "OUTPUT_CONTAINER_NOT_WRITABLE",
+        "MEDIA_DURATION_UNAVAILABLE",
+        "MEDIA_STREAM_UNRECOGNIZED",
+        "MEDIA_PROFILE_UNAVAILABLE",
+        "MEDIA_PIXEL_FORMAT_UNAVAILABLE",
+        "MEDIA_BIT_DEPTH_UNAVAILABLE",
+        "MEDIA_HDR_STATE_INCOMPLETE",
+        "MEDIA_ANIMATION_STATE_NOT_PROBED"
+      ]
+    },
+    "EnvironmentSummary": {
+      "type": "object",
+      "properties": {
+        "architecture": {
+          "type": "string"
+        },
+        "gpu_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint",
+          "minimum": 0
+        },
+        "logical_cores": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "operating_system": {
+          "$ref": "#/$defs/Observed"
+        },
+        "sampled_at_unix_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "total_memory_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "operating_system",
+        "architecture",
+        "logical_cores",
+        "total_memory_bytes"
+      ]
+    },
+    "ErrorDetail": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/EngineErrorCode"
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "retryable"
+      ]
+    },
+    "EstimateConfidence": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "ExecutionChainCandidate": {
+      "type": "object",
+      "properties": {
+        "audio_bitrate_options_bps": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0
+          }
+        },
+        "audio_channel_count_options": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          }
+        },
+        "audio_decoders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StreamBackendSelection"
+          }
+        },
+        "audio_encoder": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "audio_sample_rate_options_hz": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          }
+        },
+        "demuxer": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "muxer": {
+          "type": "string"
+        },
+        "output_audio_codec": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "output_bit_depth": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "output_container": {
+          "type": "string"
+        },
+        "output_hdr_mode": {
+          "$ref": "#/$defs/HdrMode"
+        },
+        "output_pixel_format": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "output_video_codec": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "output_video_profile": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "preserves_hdr": {
+          "type": "boolean"
+        },
+        "processors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProcessorSelection"
+          }
+        },
+        "requires_tone_mapping": {
+          "type": "boolean"
+        },
+        "video_decoders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StreamBackendSelection"
+          }
+        },
+        "video_encoder": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "demuxer",
+        "video_decoders",
+        "audio_decoders",
+        "processors",
+        "muxer",
+        "output_container",
+        "audio_bitrate_options_bps",
+        "audio_sample_rate_options_hz",
+        "audio_channel_count_options",
+        "output_hdr_mode",
+        "preserves_hdr",
+        "requires_tone_mapping"
+      ]
+    },
+    "HdrInfo": {
+      "type": "object",
+      "properties": {
+        "color_primaries": {
+          "$ref": "#/$defs/Observed"
+        },
+        "color_range": {
+          "$ref": "#/$defs/Observed"
+        },
+        "color_space": {
+          "$ref": "#/$defs/Observed"
+        },
+        "color_transfer": {
+          "$ref": "#/$defs/Observed"
+        }
+      },
+      "required": [
+        "color_range",
+        "color_space",
+        "color_transfer",
+        "color_primaries"
+      ]
+    },
+    "HdrMode": {
+      "type": "string",
+      "enum": [
+        "sdr",
+        "hdr10",
+        "hlg",
+        "dolby_vision",
+        "unknown"
+      ]
+    },
+    "ImageInfo": {
+      "type": "object",
+      "properties": {
+        "alpha": {
+          "$ref": "#/$defs/Observed7"
+        },
+        "bit_depth": {
+          "$ref": "#/$defs/Observed5"
+        },
+        "codec": {
+          "type": "string"
+        },
+        "color_space": {
+          "$ref": "#/$defs/Observed"
+        },
+        "height": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "pixel_format": {
+          "$ref": "#/$defs/Observed"
+        },
+        "width": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "codec",
+        "width",
+        "height",
+        "pixel_format",
+        "bit_depth",
+        "alpha",
+        "color_space"
+      ]
+    },
+    "ImageInputRequirement": {
+      "type": "object",
+      "properties": {
+        "alpha": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "animated": {
+          "type": "boolean"
+        },
+        "bit_depth": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "codec": {
+          "type": "string"
+        },
+        "color_space": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "height": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "pixel_format": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "width": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "codec",
+        "width",
+        "height",
+        "animated"
+      ]
+    },
+    "InputMediaRequirements": {
+      "type": "object",
+      "properties": {
+        "analysis_status": {
+          "$ref": "#/$defs/MediaAnalysisStatus"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuxiliaryInputRequirement"
+          }
+        },
+        "audio_streams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AudioInputRequirement"
+          }
+        },
+        "container": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "data_streams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuxiliaryInputRequirement"
+          }
+        },
+        "duration_microseconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "image": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ImageInputRequirement"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "media_kind": {
+          "$ref": "#/$defs/MediaKind"
+        },
+        "source_size_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "subtitle_streams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuxiliaryInputRequirement"
+          }
+        },
+        "unknown_streams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UnknownInputRequirement"
+          }
+        },
+        "video_streams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/VideoInputRequirement"
+          }
+        }
+      },
+      "required": [
+        "media_kind",
+        "analysis_status",
+        "source_size_bytes",
+        "video_streams",
+        "audio_streams",
+        "subtitle_streams",
+        "data_streams",
+        "attachments",
+        "unknown_streams"
+      ]
+    },
+    "MediaAnalysis": {
+      "type": "object",
+      "properties": {
+        "descriptor": {
+          "$ref": "#/$defs/MediaDescriptor"
+        },
+        "display_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "duration": {
+          "$ref": "#/$defs/Observed2"
+        },
+        "file_name": {
+          "type": "string"
+        },
+        "file_size": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "format": {
+          "$ref": "#/$defs/Observed"
+        },
+        "kind": {
+          "$ref": "#/$defs/MediaKind"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "provider_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/MediaAnalysisStatus"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MediaWarning"
+          }
+        }
+      },
+      "required": [
+        "status",
+        "source_id",
+        "file_name",
+        "file_size",
+        "kind",
+        "format",
+        "duration",
+        "descriptor",
+        "provider",
+        "warnings"
+      ]
+    },
+    "MediaAnalysisStatus": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial",
+        "failed"
+      ]
+    },
+    "MediaDescriptor": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "streams": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MediaStreamDescriptor"
+              }
+            },
+            "type": {
+              "type": "string",
+              "const": "video"
+            }
+          },
+          "required": [
+            "type",
+            "streams"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "streams": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MediaStreamDescriptor"
+              }
+            },
+            "type": {
+              "type": "string",
+              "const": "audio"
+            }
+          },
+          "required": [
+            "type",
+            "streams"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "image": {
+              "$ref": "#/$defs/ImageInfo"
+            },
+            "type": {
+              "type": "string",
+              "const": "image"
+            }
+          },
+          "required": [
+            "type",
+            "image"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "animation": {
+              "$ref": "#/$defs/AnimationInfo"
+            },
+            "image": {
+              "$ref": "#/$defs/ImageInfo"
+            },
+            "type": {
+              "type": "string",
+              "const": "animated_image"
+            }
+          },
+          "required": [
+            "type",
+            "image",
+            "animation"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "streams": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MediaStreamDescriptor"
+              }
+            },
+            "type": {
+              "type": "string",
+              "const": "other"
+            }
+          },
+          "required": [
+            "type",
+            "streams"
+          ]
+        }
+      ]
+    },
+    "MediaDuration": {
+      "type": "object",
+      "properties": {
+        "timescale": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "value": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "value",
+        "timescale"
+      ]
+    },
+    "MediaKind": {
+      "type": "string",
+      "enum": [
+        "video",
+        "audio",
+        "image",
+        "animated_image",
+        "other"
+      ]
+    },
+    "MediaStreamDescriptor": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "info": {
+              "$ref": "#/$defs/VideoStreamInfo"
+            },
+            "type": {
+              "type": "string",
+              "const": "video"
+            }
+          },
+          "required": [
+            "type",
+            "info"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "info": {
+              "$ref": "#/$defs/AudioStreamInfo"
+            },
+            "type": {
+              "type": "string",
+              "const": "audio"
+            }
+          },
+          "required": [
+            "type",
+            "info"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "info": {
+              "$ref": "#/$defs/SubtitleStreamInfo"
+            },
+            "type": {
+              "type": "string",
+              "const": "subtitle"
+            }
+          },
+          "required": [
+            "type",
+            "info"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "info": {
+              "$ref": "#/$defs/DataStreamInfo"
+            },
+            "type": {
+              "type": "string",
+              "const": "data"
+            }
+          },
+          "required": [
+            "type",
+            "info"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "info": {
+              "$ref": "#/$defs/DataStreamInfo"
+            },
+            "type": {
+              "type": "string",
+              "const": "attachment"
+            }
+          },
+          "required": [
+            "type",
+            "info"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "info": {
+              "$ref": "#/$defs/UnknownStreamInfo"
+            },
+            "type": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "type",
+            "info"
+          ]
+        }
+      ]
+    },
+    "MediaWarning": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/EngineErrorCode"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ]
+    },
+    "ObservationStatus": {
+      "type": "string",
+      "enum": [
+        "detected",
+        "absent",
+        "unavailable",
+        "not_probed",
+        "unsupported",
+        "failed",
+        "not_applicable"
+      ]
+    },
+    "Observed": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/ObservationStatus"
+        },
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "Observed2": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/ObservationStatus"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MediaDuration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "Observed3": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/ObservationStatus"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Rational"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "Observed4": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/ObservationStatus"
+        },
+        "value": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "Observed5": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/ObservationStatus"
+        },
+        "value": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "Observed6": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/ObservationStatus"
+        },
+        "value": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "Observed7": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/ObservationStatus"
+        },
+        "value": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "PresetDefinition": {
+      "type": "object",
+      "properties": {
+        "applicable": {
+          "type": "boolean"
+        },
+        "candidate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExecutionChainCandidate"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "configuration": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ResolvedConfiguration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "estimate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SizeEstimate"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "policy": {
+          "$ref": "#/$defs/PresetPolicy"
+        },
+        "policy_version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unavailable_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "display_name",
+        "description",
+        "applicable",
+        "policy_version",
+        "policy",
+        "risks"
+      ]
+    },
+    "PresetPolicy": {
+      "type": "object",
+      "properties": {
+        "applicable_task_modes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TaskMode"
+          }
+        },
+        "audio_bitrate_bps": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "description": {
+          "type": "string"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "preferred_audio_codecs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preferred_containers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preferred_video_codecs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "preserve_hdr": {
+          "type": "boolean"
+        },
+        "source_size_ratio_basis_points": {
+          "type": "integer",
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0
+        },
+        "video_bitrate_ceilings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BitrateCeiling"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "display_name",
+        "description",
+        "applicable_task_modes",
+        "preferred_containers",
+        "preferred_video_codecs",
+        "preferred_audio_codecs",
+        "video_bitrate_ceilings",
+        "audio_bitrate_bps",
+        "source_size_ratio_basis_points",
+        "preserve_hdr"
+      ]
+    },
+    "ProcessorSelection": {
+      "type": "object",
+      "properties": {
+        "backend_id": {
+          "type": "string"
+        },
+        "operation": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "backend_id",
+        "operation"
+      ]
+    },
+    "Rational": {
+      "type": "object",
+      "properties": {
+        "denominator": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "numerator": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator"
+      ]
+    },
+    "Recommendation": {
+      "type": "object",
+      "properties": {
+        "configuration": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ResolvedConfiguration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "estimate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SizeEstimate"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resource_sample_unix_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "status": {
+          "$ref": "#/$defs/RecommendationStatus"
+        }
+      },
+      "required": [
+        "status",
+        "reasons"
+      ]
+    },
+    "RecommendationStatus": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial",
+        "unavailable"
+      ]
+    },
+    "ResolvedAudioStreamConfiguration": {
+      "type": "object",
+      "properties": {
+        "decoder_backend": {
+          "type": "string"
+        },
+        "encoder_backend": {
+          "type": "string"
+        },
+        "input_stream_index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "output_codec": {
+          "type": "string"
+        },
+        "target_bitrate": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "target_channel_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        },
+        "target_sample_rate_hz": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "input_stream_index",
+        "decoder_backend",
+        "encoder_backend",
+        "output_codec"
+      ]
+    },
+    "ResolvedConfiguration": {
+      "type": "object",
+      "properties": {
+        "audio_codec": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "audio_streams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ResolvedAudioStreamConfiguration"
+          }
+        },
+        "container": {
+          "type": "string"
+        },
+        "demuxer_backend": {
+          "type": "string"
+        },
+        "execution_chain_id": {
+          "type": "string"
+        },
+        "muxer_backend": {
+          "type": "string"
+        },
+        "output_bit_depth": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "output_hdr_mode": {
+          "$ref": "#/$defs/HdrMode"
+        },
+        "output_pixel_format": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "preserves_hdr": {
+          "type": "boolean"
+        },
+        "processors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProcessorSelection"
+          }
+        },
+        "requires_tone_mapping": {
+          "type": "boolean"
+        },
+        "selected_preset": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "selection_source": {
+          "$ref": "#/$defs/SelectionSource"
+        },
+        "target_size": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TargetBitrateSolution"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "target_video_bitrate": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "video_codec": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "video_decoders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StreamBackendSelection"
+          }
+        },
+        "video_encoder_backend": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "video_profile": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "selection_source",
+        "execution_chain_id",
+        "container",
+        "demuxer_backend",
+        "video_decoders",
+        "audio_streams",
+        "processors",
+        "muxer_backend",
+        "output_hdr_mode",
+        "preserves_hdr",
+        "requires_tone_mapping"
+      ]
+    },
+    "SelectionSource": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "preset",
+        "custom_target_size"
+      ]
+    },
+    "SizeEstimate": {
+      "type": "object",
+      "properties": {
+        "basis": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confidence": {
+          "$ref": "#/$defs/EstimateConfidence"
+        },
+        "expected_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "maximum_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "minimum_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "recommended_audio_bitrate": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "recommended_video_bitrate": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "expected_bytes",
+        "confidence",
+        "basis"
+      ]
+    },
+    "SourceFingerprintSummary": {
+      "type": "object",
+      "properties": {
+        "canonical_path": {
+          "type": "string"
+        },
+        "canonicalization_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "canonicalization_status": {
+          "$ref": "#/$defs/ObservationStatus"
+        },
+        "file_size_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "modified_time_unix_nanos": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "platform_file_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "quick_content_hash_hex": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "canonical_path",
+        "canonicalization_status",
+        "file_size_bytes",
+        "quick_content_hash_hex"
+      ]
+    },
+    "StreamBackendSelection": {
+      "type": "object",
+      "properties": {
+        "backend_id": {
+          "type": "string"
+        },
+        "stream_index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "stream_index",
+        "backend_id"
+      ]
+    },
+    "SubtitleStreamInfo": {
+      "type": "object",
+      "properties": {
+        "codec": {
+          "type": "string"
+        },
+        "stream_index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "stream_index",
+        "codec"
+      ]
+    },
+    "TargetBitrateSolution": {
+      "type": "object",
+      "properties": {
+        "audio_bitrate": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "confidence": {
+          "$ref": "#/$defs/EstimateConfidence"
+        },
+        "target_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "total_bitrate": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "video_bitrate": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "target_bytes",
+        "total_bitrate",
+        "confidence"
+      ]
+    },
+    "TaskMode": {
+      "type": "string",
+      "enum": [
+        "video_compress",
+        "video_convert",
+        "audio_compress",
+        "audio_convert",
+        "image_compress",
+        "image_convert"
+      ]
+    },
+    "UnknownInputRequirement": {
+      "type": "object",
+      "properties": {
+        "codec": {
+          "type": "string"
+        },
+        "media_type_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "stream_index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "stream_index",
+        "codec",
+        "media_type_code"
+      ]
+    },
+    "UnknownStreamInfo": {
+      "type": "object",
+      "properties": {
+        "codec": {
+          "type": "string"
+        },
+        "media_type_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "stream_index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "stream_index",
+        "codec",
+        "media_type_code"
+      ]
+    },
+    "VideoInputRequirement": {
+      "type": "object",
+      "properties": {
+        "bit_depth": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "codec": {
+          "type": "string"
+        },
+        "color_primaries": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "color_range": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "color_space": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "color_transfer": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "frame_rate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Rational"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hdr_mode": {
+          "$ref": "#/$defs/HdrMode"
+        },
+        "height": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "pixel_format": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "profile": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stream_index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "width": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "stream_index",
+        "codec",
+        "width",
+        "height",
+        "hdr_mode"
+      ]
+    },
+    "VideoStreamInfo": {
+      "type": "object",
+      "properties": {
+        "bit_depth": {
+          "$ref": "#/$defs/Observed5"
+        },
+        "bitrate": {
+          "$ref": "#/$defs/Observed4"
+        },
+        "codec": {
+          "type": "string"
+        },
+        "frame_count": {
+          "$ref": "#/$defs/Observed4"
+        },
+        "frame_rate": {
+          "$ref": "#/$defs/Observed3"
+        },
+        "hdr": {
+          "$ref": "#/$defs/HdrInfo"
+        },
+        "height": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "pixel_format": {
+          "$ref": "#/$defs/Observed"
+        },
+        "profile": {
+          "$ref": "#/$defs/Observed"
+        },
+        "stream_index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "time_base": {
+          "$ref": "#/$defs/Rational"
+        },
+        "width": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "stream_index",
+        "codec",
+        "profile",
+        "width",
+        "height",
+        "frame_rate",
+        "frame_count",
+        "time_base",
+        "bit_depth",
+        "pixel_format",
+        "hdr",
+        "bitrate"
+      ]
+    },
+    "WarningDetail": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/EngineErrorCode"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ]
+    }
+  }
+}

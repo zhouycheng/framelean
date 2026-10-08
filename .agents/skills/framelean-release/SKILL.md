@@ -24,23 +24,27 @@ git tag --sort=-creatordate
 git log previous-tag..HEAD
 git diff --stat previous-tag..HEAD
 CHANGELOG.md
-docs/releases/
-docs/decisions/
-docs/lessons.md
+docs/develop/restart-baseline.md
+docs/develop/
 docs/work/
 ```
 
-For every release document, also inspect packaging and update surfaces before claiming release readiness:
+`develop/next` 当前有 Flutter → Work → FLL 的最小 smoke 链路，但只有在本机能够构建目标平台的静态 libav SDK 时，完整引擎构建和打包才可验证。不要仅凭 CI 配置或归档分支发布记录声称当前版本可发布。
+
+Before claiming release readiness, inspect the current packaging and update surfaces that actually exist:
 
 ```text
-pubspec.yaml
+desktop-client/pubspec.yaml
 .github/workflows/*.yml
 scripts/README.md
-scripts/release/*
-macos/Runner/Info.plist
-macos/Runner/Configs/*.xcconfig
-installer/windows/*
-tool/sign_windows_update.dart
+scripts/build/package_macos.sh
+scripts/build/package_windows.ps1
+desktop-client/macos/Runner/Info.plist
+desktop-client/macos/Runner/Configs/*.xcconfig
+desktop-client/windows/CMakeLists.txt
+fengine/Cargo.toml
+fll/Cargo.toml
+legal/
 ```
 
 Use additional server/Admin files only when the release touches self-hosted update metadata, release package requirements, appcast generation, upload flows, or download-ticket behavior.
@@ -51,13 +55,12 @@ Before drafting or writing the release document, compare the current packaging s
 
 Check at minimum:
 
-- macOS and Windows GitHub Actions call the canonical release scripts and pass the required Variables / Secrets / env values.
-- Local release commands, CI workflow steps, artifact names, and upload paths match the current script outputs.
-- macOS manual DMG update expectations, `FRAMELEAN_UPDATE_BASE_URL` injection, DMG download/manual install behavior, and optional Sparkle `SUFeedURL` / `SUPublicEDKey` / `sign_update` metadata are represented accurately.
-- Windows update base URL, trusted release key ids, public keys, private-key-file signing, installer target, and `*.update.json` generation are represented accurately.
-- Missing release configuration fails closed instead of producing artifacts that look releasable but lack update configuration.
+- A current macOS and Windows packaging path exists and its CI/local entry points pass the required configuration.
+- Artifact names, contents, platform support, signing, update behavior, and upload paths match the active scripts and generated artifacts.
+- Missing release configuration fails clearly rather than producing an artifact that appears ready but is incomplete.
+- Optional mechanisms such as FFmpeg bundling or Sparkle are included only if the current app and verified packaging path actually use them.
 
-If the gate finds stale script, Action, YAML, or docs wiring, stop and ask whether to fix it first or record it as a known risk. Keep routine gate results out of the public release narrative; record only unresolved, user-relevant compatibility or packaging risks.
+If a current packaging path is absent or the gate finds stale wiring, do not claim release readiness. Ask whether to reconnect and verify the path first or record the limitation in the release document. Keep routine gate results out of the public release narrative; record only unresolved, user-relevant compatibility or packaging risks.
 
 ## Workflow
 

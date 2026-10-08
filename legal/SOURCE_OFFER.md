@@ -1,96 +1,25 @@
 # Source Code and Build Information
 
-FrameLean is distributed under the GNU General Public License, version 3 or
-any later version published by the Free Software Foundation.
+FrameLean is distributed under the GNU General Public License, version 3 or any later version published by the Free Software Foundation.
 
 ## Corresponding Source
 
-The corresponding source for FrameLean includes:
+For a binary release, corresponding source should be made available at the same location or through a clearly linked public repository for the applicable GPL period. It includes the source for the Flutter application, Rust Work service, FLL engine, build scripts, protocol/ABI definitions, and the exact source and configuration for any statically linked third-party media libraries.
 
-- FrameLean application source code.
-- Build scripts and packaging metadata in this repository.
-- FFmpeg runtime build scripts and metadata in `scripts/build/` and
-  `third_party/ffmpeg/`.
-- Documentation needed to rebuild or replace the bundled FFmpeg / FFprobe
-  runtime.
+`legal/third-party/ffmpeg/ffmpeg-build-info.txt` records only the default source-level recipe. Each actual build must preserve and publish its generated `build/dependencies/ffmpeg/<platform>/ffmpeg-build-info.txt` together with the corresponding source locations and license notices.
 
-When a binary build of FrameLean is publicly distributed, the corresponding
-source should be made available from the same release location, or from a
-clearly linked public source repository, for as long as required by GPLv3.
+## Current Default Media Library Recipe
 
-## FFmpeg Runtime
+The build scripts currently pin FFmpeg 9.0, x264 commit `0480cb05fa188d37ae87e8f4fd8f1aea3711f7ee`, and libwebp 1.5.0. They enable `--enable-gpl`, `--enable-version3`, `--enable-libx264`, and `--enable-libwebp`, use static libraries, and do not enable `--enable-nonfree`. FLL links libav in process; the build scripts do not produce FFmpeg or FFprobe CLI programs.
 
-Current FrameLean builds target FFmpeg 7.1.1 with x264/libx264, LAME/libmp3lame,
-libwebp, Opus/libopus, zimg/libzimg, libvpx, and SVT-AV1 enabled.
+- FFmpeg: https://ffmpeg.org/releases/ffmpeg-9.0.tar.xz
+- x264: https://code.videolan.org/videolan/x264
+- libwebp: https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.5.0.tar.gz
 
-The macOS architecture build and Universal 2 merge scripts are:
+macOS additionally configures VideoToolbox and AudioToolbox. Windows additionally configures D3D11VA and DXVA2. Always use the generated build record as the source for an actual release; this file alone does not certify a package.
 
-```text
-scripts/build/build_ffmpeg_macos_arch.sh
-scripts/build/build_ffmpeg_macos_universal.sh
-```
+## Rebuild and Replacement
 
-The Windows x64 build script is:
+Build scripts produce `framelean_fll` as a macOS dylib or Windows DLL and place it beside the Work executable in packaged output. Replacing that library requires a compatible FLL ABI; the source and ABI contract are under `fll/` and `protocol/fll-abi/v1/`. The current product has no UI for custom runtime paths.
 
-```text
-scripts/build/build_ffmpeg_windows_x64.sh
-```
-
-The script is run once on a Windows x64 host with MSYS2/MinGW-w64.
-
-The documented FFmpeg configure flags include:
-
-```text
-# Common flags (macOS and Windows)
---enable-gpl
---enable-version3
---enable-libx264
---enable-libmp3lame
---enable-libwebp
---enable-libopus
---enable-libzimg
---enable-libvpx
---enable-libsvtav1
---disable-shared
---enable-static
---disable-sdl2
---disable-debug
---disable-doc
---disable-ffplay
-# macOS only
---enable-videotoolbox
---enable-audiotoolbox
-# Windows only
---enable-d3d11va
---enable-dxva2
-```
-
-`--enable-nonfree` must not be used for distributed builds.
-
-## Upstream Source Locations
-
-- FrameLean source: publish this repository or a source archive for each binary
-  release.
-- FFmpeg source: <https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz>
-- x264 source: <https://code.videolan.org/videolan/x264>
-- LAME source: <https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz>
-- libwebp source: <https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.5.0.tar.gz>
-- Opus source: <https://downloads.xiph.org/releases/opus/opus-1.5.2.tar.gz>
-- zimg source: <https://github.com/sekrit-twc/zimg/archive/refs/tags/release-3.0.6.tar.gz>
-- libvpx source: <https://github.com/webmproject/libvpx/archive/refs/tags/v1.15.2.tar.gz>
-- SVT-AV1 source: <https://gitlab.com/AOMediaCodec/SVT-AV1/-/archive/v2.3.0/SVT-AV1-v2.3.0.tar.gz>
-
-If a release uses different FFmpeg, x264, LAME, libwebp, Opus, zimg, libvpx, or SVT-AV1 versions,
-update this file and the runtime build metadata before distributing that
-release.
-
-## User Replacement and Rebuild
-
-FrameLean resolves FFmpeg / FFprobe from bundled runtime locations, known system
-locations, PATH, or user-configured custom paths, depending on platform and app
-settings. Users should be able to replace or rebuild the FFmpeg / FFprobe
-runtime with a GPL-compatible build.
-
-Release packaging includes this legal directory, the root LICENSE file,
-legal/NOTICE.md, and the relevant FFmpeg build metadata so recipients receive
-the license terms and source availability information with the binary package.
+A release bundle includes the root LICENSE and `legal/` directory. Update these materials from the actual Cargo/Pub lockfiles and generated native build metadata before public distribution.

@@ -12,12 +12,22 @@ Review for scope creep, architecture violations, missing behavior coverage, stal
 For changed Dart files, check formatting without modifying files:
 
 ```bash
+cd desktop-client
 dart format --output=none --set-exit-if-changed <changed-dart-files>
 flutter analyze
 flutter test <targeted-tests>
 ```
 
 Run the full Flutter suite only when the changed surface or requested confidence justifies it.
+
+For Rust Work changes, from the repository root:
+
+```bash
+cargo check --manifest-path fengine/Cargo.toml --all-targets --locked
+cargo test --manifest-path fengine/Cargo.toml --locked
+```
+
+FLL checks require the platform's bundled static libav SDK. Use the runtime build script when that SDK is available.
 
 For docs or project Skills:
 

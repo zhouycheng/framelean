@@ -14,7 +14,7 @@
 按需递增读取，避免每次加载全部文档。
 
 1. 默认读取 `CONTEXT.md`、`docs/README.md` 和 `docs/work/active.md`。如果仓库指令尚未应用，再读取 `AGENTS.md`。
-2. 按任务读取相关 `docs/releases/`、`docs/decisions/`、`docs/develop/`、`docs/reference/` 或 `docs/lessons.md`。仅在需要版本历史时读取 `CHANGELOG.md`。
+2. 按任务读取 `docs/develop/restart-baseline.md`、相关 `docs/develop/` 或 `docs/reference/`。旧版本事实位于归档 Git 历史，不把它们当作当前功能承诺。
 3. 分析、实现或验证具体功能时，用 `rg` 定位相关源码、测试、脚本和配置，不全量读取目录。
 4. 只有验证、交付、发布或用户明确要求 Git 操作时，读取 Git 状态、diff、历史和标签。
 
@@ -47,6 +47,6 @@
 ## 共同底线
 
 - 先核对真实项目状态，再更新文档。
-- 不在 `main` 上直接做日常开发改动。
+- `develop/next` 是当前开发集成线；功能工作通过短生命周期分支合入。`main` 与 Alpha 保持冻结。
 - 不处理无关用户改动，不擅自 stage、commit、push、revert 或发布。
 - 不创建 `docs/archive/`、`docs/features/`、`docs/plans/` 或 `docs/product/roadmap.md`。

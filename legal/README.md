@@ -22,13 +22,13 @@ macOS release builds copy this directory into:
 FrameLean.app/Contents/Resources/legal/
 ```
 
-DMG packages contain the app bundle, so the legal materials are distributed
-inside the DMG with the application.
+The macOS ZIP contains the `.app` bundle, including these legal materials.
 
-Windows release builds copy this directory into:
+The Windows packaging script is configured to place `legal/` beside the Runner executable in the ZIP:
 
 ```text
-FrameLean.exe directory/legal/
+<Runner executable>
+legal/
 ```
 
 ## Maintenance

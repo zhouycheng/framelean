@@ -1,0 +1,26 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/framelean-core",
+    "crates/framelean-media",
+    "crates/framelean-analysis",
+    "crates/framelean-environment",
+    "crates/framelean-decision",
+    "crates/framelean-ffmpeg",
+    "crates/framelean-ffi",
+    "crates/framelean-pipeline",
+    "crates/framelean-plugin",
+    "crates/framelean-runtime",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace.dependencies]
+blake3 = { version = "1", features = ["no_neon"] }
+schemars = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4"] }

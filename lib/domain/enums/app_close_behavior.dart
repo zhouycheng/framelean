@@ -1,1 +1,0 @@
-enum AppCloseBehavior { background, quit }

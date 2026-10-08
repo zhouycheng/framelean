@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExecutionSubmissionRequest",
+  "type": "object",
+  "properties": {
+    "analysis_id": {
+      "type": "string"
+    },
+    "context": {
+      "$ref": "#/$defs/RequestContext",
+      "default": {
+        "client_file_id": null,
+        "correlation_id": null,
+        "request_id": null
+      }
+    },
+    "expected_revision": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "output": {
+      "$ref": "#/$defs/ExecutionOutputRequest"
+    },
+    "selection": {
+      "$ref": "#/$defs/RecalculateSelection"
+    }
+  },
+  "required": [
+    "analysis_id",
+    "expected_revision",
+    "selection",
+    "output"
+  ],
+  "$defs": {
+    "AudioStreamSelection": {
+      "type": "object",
+      "properties": {
+        "bitrate_bps": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "channel_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        },
+        "sample_rate_hz": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        },
+        "stream_index": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "stream_index"
+      ]
+    },
+    "ExecutionOutputRequest": {
+      "type": "object",
+      "properties": {
+        "collision_policy": {
+          "$ref": "#/$defs/OutputCollisionPolicy"
+        },
+        "requested_path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "requested_path",
+        "collision_policy"
+      ]
+    },
+    "ManualConfigurationSelection": {
+      "type": "object",
+      "properties": {
+        "candidate_id": {
+          "type": "string"
+        },
+        "overrides": {
+          "$ref": "#/$defs/ManualSelection"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "overrides"
+      ]
+    },
+    "ManualSelection": {
+      "type": "object",
+      "properties": {
+        "audio_codec": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "audio_streams": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/AudioStreamSelection"
+          }
+        },
+        "container": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "output_pixel_format": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "preserves_hdr": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "video_codec": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "OutputCollisionPolicy": {
+      "type": "string",
+      "enum": [
+        "fail_if_exists",
+        "generate_unique"
+      ]
+    },
+    "PresetSelection": {
+      "type": "object",
+      "properties": {
+        "candidate_id": {
+          "type": "string"
+        },
+        "overrides": {
+          "$ref": "#/$defs/ManualSelection"
+        },
+        "preset_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "preset_id",
+        "candidate_id",
+        "overrides"
+      ]
+    },
+    "RecalculateSelection": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "const": "preset"
+            },
+            "selection": {
+              "$ref": "#/$defs/PresetSelection"
+            }
+          },
+          "required": [
+            "mode",
+            "selection"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "const": "custom_target_size"
+            },
+            "selection": {
+              "$ref": "#/$defs/TargetSizeSelection"
+            }
+          },
+          "required": [
+            "mode",
+            "selection"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "const": "manual"
+            },
+            "selection": {
+              "$ref": "#/$defs/ManualConfigurationSelection"
+            }
+          },
+          "required": [
+            "mode",
+            "selection"
+          ]
+        }
+      ]
+    },
+    "RequestContext": {
+      "type": "object",
+      "properties": {
+        "client_file_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "correlation_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "request_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "TargetSizeSelection": {
+      "type": "object",
+      "properties": {
+        "allow_frame_rate_change": {
+          "type": "boolean"
+        },
+        "allow_resolution_change": {
+          "type": "boolean"
+        },
+        "candidate_id": {
+          "type": "string"
+        },
+        "target_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "candidate_id",
+        "target_bytes",
+        "allow_resolution_change",
+        "allow_frame_rate_change"
+      ]
+    }
+  }
+}

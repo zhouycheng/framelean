@@ -1,0 +1,11 @@
+[package]
+name = "framelean-ffmpeg"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+framelean-core = { path = "../framelean-core" }
+framelean-media = { path = "../framelean-media" }
+framelean-analysis = { path = "../framelean-analysis" }
+rusty_ffmpeg = "0.17.0"

@@ -1,59 +1,31 @@
 # FrameLean 项目上下文
 
-## 项目定位
+## 产品方向
 
-FrameLean（帧轻）是面向 macOS 和 Windows 的本地桌面媒体压缩与格式处理工具。它以 Flutter Desktop 提供图形界面，通过 FFmpeg / FFprobe 完成视频、图片和音频分析与处理，并使用 Riverpod、Drift 和 SQLite 管理任务、设置与本地状态。
+FrameLean 是面向 macOS 和 Windows 的本地桌面媒体压缩与格式处理工具。新主线继续使用 Flutter 前端、Rust Work 本机后端和 Rust FLL 媒体引擎动态库；不通过 FFmpeg CLI 执行媒体处理。
 
-项目不提供云端转码、账号体系、多设备同步、在线转换、音乐平台下载或远程解析服务。
+## 当前开发状态
 
-## 当前版本
+`develop/next` 是长期开发集成线。当前代码已建立三项目目录和第一条最小跨进程/动态 ABI 链路：Flutter `EngineGateway` → loopback FEngine → `libloading` → FLL C ABI → FLL Runtime。Work 只提供认证、ping、媒体分析和 smoke 关闭；不能据此称为完整产品或完整媒体功能迁移。
 
-应用版本以 `pubspec.yaml` 为准，当前为 `1.2.1+8`。`v1.2.1` 已发布，集中交付更新入口、任务夹批量工作流、受控并行、隐藏 partial 输出保护、媒体可靠性、通知策略、快捷键、关闭到后台，以及工作台背景引导。
+2026-10-07 已在 macOS arm64 构建静态 libav SDK、FLL Release dylib 与 Work，并通过真实 Flutter gateway smoke：PCM WAV 被识别为 8000 Hz、单声道，新的 Gateway 实例接回同一个 Work PID。FLL 的 136 项测试、Work 的 4 项测试及 Flutter 分析通过。
 
-各版本的稳定事实和 release 文档见 `docs/releases/`，版本级摘要见 `CHANGELOG.md`。
+2026-10-08 已完成 macOS arm64 Release App / ZIP 打包、包内 gateway smoke、解压后 ad hoc 签名完整性检查，以及 Release App 默认路径连接和 WAV 分析的手动验证。打包生成完整文件清单与 SHA-256；核对方案见 `docs/develop/package-checklist.md`。Windows、Intel/Universal 2、Developer ID 签名与公证仍未验收。
 
-## 当前能力
+旧版数据库不迁移，初始应用数据为空。用户源媒体和输出媒体不会由代码清理处理。
 
-- 视频、图片和音频共享本地任务模型，支持文件 / 文件夹导入、FFprobe 分析、类型化配置、任务队列和 FFmpeg 输出。
-- 工作台支持任务夹、拖拽排序、批量配置与执行、单任务控制、聚合日志、深浅主题和非阻塞背景引导。
-- 执行队列按用户上限与资源守卫受控并行；运行输出先写同目录隐藏 partial，成功后再原子发布。
-- 视频覆盖 MP4、MOV、MKV、WebM 和 AVI 的受约束容器 / 编码组合；透明视频自动使用 MOV + ProRes 4444 保留 alpha。
-- 图片与音频压缩执行结果验收，避免把无效或更大的输出静默标记为成功。
-- 设置保存媒体默认值、输出规则、通知策略、快捷键、并发上限、扫描深度、主题和关闭行为。
-- 更新体验提供工作台状态、轻量通知和完整版本日志。公开发布默认跳转 GitHub、Gitee 或备用下载地址，不直接下载安装包。
+## 当前结构
 
-更细的行为、数据字段和测试边界分别以 `docs/develop/architecture.md`、`docs/develop/data-model.md` 和 `docs/develop/test-plan.md` 为准。
+- `desktop-client/`：Flutter 桌面 UI、设置与未来的应用本地数据。
+- `fengine/`：Rust Work 服务，是 Flutter 与 FLL 的唯一网关；动态加载 FLL，不静态依赖 FLL crates。
+- `fll/`：Rust 媒体引擎项目，生成 macOS `.dylib` 和 Windows `.dll`；通过进程内 libav 适配器处理媒体。
+- `protocol/`：Flutter ↔ Work JSON 协议与 Work ↔ FLL ABI 的契约说明，不是第四个项目。
 
-## 架构边界
+当前 Smoke 操作和版本事实见 `docs/develop/architecture.md`、`protocol/` 与 `fll/README.md`。
 
-```text
-features -> application -> domain
-                  |
-                  v
-            infrastructure
-```
+## Git 与资料边界
 
-- `domain` 保存实体、枚举和值对象，不依赖 Flutter、Drift、FFmpeg、文件系统或平台 API。
-- `application` 保存用例、仓储接口、服务抽象和应用流程。
-- `infrastructure` 实现数据库、FFmpeg / FFprobe、文件系统、进程和平台能力。
-- `features` 负责功能 UI 与 Riverpod 状态协调。
-- `app` 负责入口、主题、路由、依赖装配和跨功能展示组件。
-
-## 平台与发布边界
-
-| 平台 | 当前边界 |
-| --- | --- |
-| macOS Universal 2 | 主要发布平台，单一 DMG 覆盖 Intel 与 Apple Silicon |
-| Windows x64 | 主要发布平台，提供当前用户安装器和可选便携 ZIP |
-| Linux / Web | 工程目录可能存在，但不是当前发布目标 |
-
-公开更新默认使用外部下载地址。保留的 package 自更新链只有在服务端没有外部地址且提供完整 package 元数据时才可能使用，重新启用前需单独验证签名、下载和安装。更新服务端位于独立仓库 [FrameLean-Backend](https://github.com/zhouycheng/FrameLean-Backend)；本仓库只维护客户端契约与集成边界。
-
-## 文档入口
-
-- 文档地图：`docs/README.md`
-- 当前工作：`docs/work/active.md`
-- 有效决策：`docs/work/decisions.md`
-- 工程事实：`docs/develop/`
-- 版本事实：`docs/releases/`
-- 项目 Skills：`.agents/skills/README.md`
+- `develop/next` 是当前集成目标；功能通过短生命周期分支合入。
+- 旧 `main` 和 `develop/v1.3.0-alpha` 冻结。`archive-main-2026-10-07`、`archive-alpha-v1.3.0-2026-10-07` 保存原提交。
+- 旧项目经验与 Alpha 调用链、未完成边界见 `docs/develop/restart-baseline.md`。
+- 工作区未提交清理和重建改动均是现有资产；不要重置、覆盖、暂存或提交。

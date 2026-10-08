@@ -1,9 +1,3 @@
 # Flutter and Dart
 
-FrameLean is built with Flutter, Dart, and Dart packages from pub.dev.
-Flutter, Dart, and many official Dart packages use BSD-style licenses.
-
-Direct runtime and development dependencies are summarized in
-../THIRD_PARTY_NOTICES.md. Review pubspec.lock and the local package cache
-before each public binary release because transitive dependency licenses can
-change when packages are upgraded.
+FrameLean uses the Flutter and Dart runtimes. Release packages should preserve the license notices distributed with the Flutter SDK and the packages resolved in `desktop-client/pubspec.lock`. Review the lockfile and generated Flutter license bundle for each public release.

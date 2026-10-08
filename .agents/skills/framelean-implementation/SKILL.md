@@ -12,7 +12,7 @@ Read `.agents/skills/README.md` and the accepted requirement or plan. Inspect re
 - Make the smallest coherent change that completes the confirmed scope.
 - Preserve unrelated user changes and avoid formatting churn, duplicate abstractions, speculative features, and unnecessary dependencies.
 - Prefer existing helpers, providers, use cases, mappers, widgets, scripts, and documentation patterns.
-- Keep `domain` independent of Flutter, Drift, FFmpeg, filesystem, and platform APIs; keep orchestration in `application`, implementations in `infrastructure`, UI coordination in `features`, and composition / shared presentation in `app`.
+- Follow the architecture currently documented in `docs/develop/architecture.md`; do not restore old layers or media runtime abstractions without a confirmed requirement.
 - Update only documentation whose current facts changed. Keep temporary plans in `.workspace/`.
 - If evidence invalidates the agreed scope or exposes a material risk, stop and explain before expanding the task.
 

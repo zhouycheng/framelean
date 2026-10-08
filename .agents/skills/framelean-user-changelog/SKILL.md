@@ -1,6 +1,6 @@
 ---
 name: framelean-user-changelog
-description: "Use to generate friendly, app-facing FrameLean version logs in Markdown and save them to the current user's Downloads directory. Trigger when the user asks for a version log, update log, changelog, what's new copy, or content for the software's full release-notes page. Default to the current version in pubspec.yaml when no version is specified. Use framelean-release instead for formal release documents and packaging readiness."
+description: "Use to generate friendly, app-facing FrameLean version logs in Markdown and save them to the current user's Downloads directory. Trigger when the user asks for a version log, update log, changelog, what's new copy, or content for the software's full release-notes page. Default to the current version in desktop-client/pubspec.yaml when no version is specified. Use framelean-release instead for formal release documents and packaging readiness."
 ---
 
 # FrameLean User Changelog
@@ -14,7 +14,7 @@ Read `.agents/skills/README.md` first and follow its shared pre-read protocol.
 ## Choose the Version
 
 - Use an explicitly requested version and normalize it to `vX.Y.Z`.
-- Otherwise, read `version:` from `pubspec.yaml`, remove the `+build` suffix, and use that semantic version. Do not ask for a version merely because the user omitted it.
+- Otherwise, read `version:` from `desktop-client/pubspec.yaml`, remove the `+build` suffix, and use that semantic version. Do not ask for a version merely because the user omitted it.
 - Omit the build number from the public title unless distinguishing builds is necessary and supported by project facts.
 
 ## Gather Evidence

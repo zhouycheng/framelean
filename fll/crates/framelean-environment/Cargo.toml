@@ -1,0 +1,14 @@
+[package]
+name = "framelean-environment"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+framelean-core = { path = "../framelean-core" }
+schemars.workspace = true
+serde.workspace = true
+sysinfo = "0.37"
+
+[dev-dependencies]
+serde_json.workspace = true

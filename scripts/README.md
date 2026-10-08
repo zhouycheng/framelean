@@ -1,105 +1,38 @@
-# FrameLean Scripts
+# FrameLean 构建与清理脚本
 
-The scripts are split by responsibility:
+FrameLean 有三个独立可构建项目。以下脚本服务于新主线；FFmpeg 脚本构建静态 libav SDK，不产出或调用 FFmpeg/FFprobe 命令行程序。
 
-```text
-scripts/
-  build/      Build third-party platform runtimes.
-  release/    Build and package FrameLean release artifacts.
+## 静态 libav SDK 与 Rust runtime
+
+| 脚本 | 平台 | 作用 |
+| --- | --- | --- |
+| `build/build_ffmpeg_macos_arch.sh <arm64|x86_64>` | 原生 macOS | 构建当前 FLL 所需的静态 libav SDK |
+| `build/build_ffmpeg_windows_x64.sh` | MSYS2 MINGW64 | 构建 Windows x64 静态 libav SDK |
+| `build/with_bundled_ffmpeg.sh` | macOS / MSYS2 | 向 Cargo 显式提供 SDK，禁止静默回退到系统 FFmpeg |
+| `build/build_runtime_macos.sh` | macOS | 构建并校验 FLL dylib 与 Work 可执行文件 |
+| `build/build_runtime_windows.sh` | MSYS2 MINGW64 | 构建并校验 FLL DLL 与 Work 可执行文件 |
+
+静态 SDK 放在被忽略的 `build/dependencies/ffmpeg/`。Work 与 FLL 的构建输出并排位于 `build/runtime/<platform>/`，不提交到仓库。
+
+## 桌面打包
+
+- `build/package_macos.sh`：构建 runtime、分析/测试 Flutter 项目、生成当前主机架构的 macOS app，复制 Work/FLL 到 `Contents/Resources/` 后重新 ad hoc 签名并校验，从打包位置执行 gateway smoke，生成 ZIP、完整条目清单 `.zip.files.txt` 和 SHA-256 `.zip.sha256`。
+- `build/package_windows.ps1`：验证已有 MSYS2 runtime、分析/测试 Flutter 项目、Release 构建 Windows app，要求 CMake 将 Work/FLL 放到 Runner 旁，从包内运行 smoke 并生成 ZIP。
+
+Windows Rust runtime 必须在 MSYS2 MINGW64 shell 执行 `build_runtime_windows.sh` 后，再运行 PowerShell 打包入口。
+
+## 清理本地构建物
+
+macOS 或 MSYS2 Bash：
+
+```sh
+scripts/clean.sh
 ```
 
-## Build Scripts
-
-| Script | Platform | Responsibility | Output |
-| --- | --- | --- | --- |
-| `build/build_ffmpeg_macos_arch.sh` | macOS arm64 / x86_64 | Build the pinned FFmpeg runtime and required codecs for one architecture | `third_party/ffmpeg/macos-{arch}/` |
-| `build/build_ffmpeg_macos_universal.sh` | macOS Universal 2 | Merge arm64 and x64 runtime slices | `third_party/ffmpeg/macos-universal/` |
-| `build/build_ffmpeg_windows_x64.sh` | Windows x64 (MSYS2) | Build the pinned FFmpeg runtime and required codecs | `third_party/ffmpeg/windows-x64/` |
-| `build/build_qmc_decrypt_macos_arch.sh` | macOS arm64 / x86_64 | Build the pinned upstream QMC adapter and copy its license files for one architecture | `third_party/audio_adapters/qmc/macos-{arch}/` |
-| `build/build_qmc_decrypt_macos_universal.sh` | macOS Universal 2 | Merge arm64 and x64 QMC adapter slices | `third_party/audio_adapters/qmc/macos-universal/` |
-| `build/build_qmc_decrypt_windows.ps1` | Windows x64 | Build the pinned upstream QMC adapter and copy its license files | `third_party/audio_adapters/qmc/windows-x64/` |
-
-These scripts prepare dependencies. They do not package the FrameLean app.
-
-`macos-arm64` and `macos-x64` are architecture-specific build inputs. They are
-not separate user downloads. The release app consumes only
-`third_party/ffmpeg/macos-universal`, and the final public macOS artifact remains
-one Universal 2 DMG. An Apple Silicon Mac cannot create the native Intel FFmpeg
-slice with the local build script; use the `Build macOS Universal` GitHub
-Actions workflow when both native slices are not already available.
-
-## Release Scripts
-
-| Script | Platform | Responsibility | Output |
-| --- | --- | --- | --- |
-| `release/build_dmg_macos.sh` | macOS | Build and validate the release app and DMG | `build/macos/Build/Products/Release/FrameLean-v*.dmg` and `FrameLean-v*.dmg.update.json` |
-| `release/generate_dmg_background.py` | macOS | Generate a branded DMG background image (requires Pillow) | `build/macos/dmg_background.png` |
-| `release/dmg_settings.py` | macOS | Custom dmgbuild settings with branded background and Applications symlink | consumed by `build_dmg_macos.sh` via `--settings` |
-| `release/build_windows.ps1` | Windows x64 | Canonical Windows publishing entry point. Builds the release directory once, compiles the updater helper, bundles and validates all runtimes, then creates both the portable zip and Inno Setup installer by default | `build/windows/x64/runner/FrameLean-v*-windows-x64.zip` and `build/windows/x64/installer/FrameLean-v*-windows-x64-setup.exe` |
-
-Use `build_windows.ps1` for a normal Windows release:
+Windows PowerShell：
 
 ```powershell
-PowerShell -NoProfile -ExecutionPolicy Bypass -File scripts\release\build_windows.ps1
+.\scripts\clean.ps1
 ```
 
-正式执行前必须提供 `FRAMELEAN_UPDATE_BASE_URL`、`FRAMELEAN_RELEASE_KEY_ID`、`FRAMELEAN_RELEASE_PUBLIC_KEY` 和仅存在于本机或 CI Secret 的 `FRAMELEAN_RELEASE_PRIVATE_KEY_FILE`。脚本会为安装器生成 `*.update.json`，私钥不会进入安装包。
-
-The default command creates both distribution artifacts from one Flutter build.
-Pass `-SkipZip` or `-SkipInstaller` only when a single artifact is explicitly
-needed. `-IsccPath` can select a non-default Inno Setup compiler.
-
-macOS 手动 DMG package 路线必须设置 `FRAMELEAN_UPDATE_BASE_URL`，脚本会把它写入 Flutter dart-define；启用该保留路线时，客户端通过 JSON latest / ticket 把 DMG 下载到应用支持目录中的私有更新缓存。默认脚本会为 DMG 生成不带签名的 `*.update.json`，供 package 登记时核对 file / size / SHA-256。仅当要启用 Sparkle appcast 自动更新时，额外设置 `FRAMELEAN_USE_SPARKLE_UPDATES=true`、`FRAMELEAN_REQUIRE_SPARKLE_SIGNATURE=true`、`FRAMELEAN_SPARKLE_FEED_URL` 和 `FRAMELEAN_SPARKLE_PUBLIC_ED_KEY`，并传入启用签名、公证的 dmg 参数；脚本只在 App 签名、DMG 公证装订和 `sign_update` 全部通过后生成带 Sparkle 签名的 `*.update.json`。
-
-当前公开更新默认由服务端返回 GitHub、Gitee 或备用下载地址，客户端只跳转外部页面。canonical release 脚本仍按保留 package 链 fail closed，继续要求更新配置完整并生成 `*.update.json`；这不代表 Admin 默认发布必须登记 package。
-
-正常发布给用户的安装包可以只保留 Windows 安装器
-`FrameLean-v*-windows-x64-setup.exe` 和 macOS
-`FrameLean-v*.dmg`。Windows 便携 ZIP 是额外留存成果物，`*.update.json` 是
-Admin Web 发布校验元数据，都不是新的平台安装包。
-
-GitHub Actions 打包需要配置以下 Variables / Secret，否则 workflow 会失败，避免产出缺少更新配置的安装包：
-
-```text
-Variables:
-FRAMELEAN_UPDATE_BASE_URL
-FRAMELEAN_RELEASE_KEY_ID
-FRAMELEAN_RELEASE_PUBLIC_KEY
-
-Secrets:
-FRAMELEAN_RELEASE_PRIVATE_KEY
-```
-
-Sparkle 相关 Variables 只在显式启用 Sparkle 自动更新路线时需要；默认 macOS DMG 更新路线不依赖 Apple Developer ID 证书或 Sparkle 公钥。
-
-macOS DMG 构建依赖 Python 3 和 `dmgbuild`（`pip install dmgbuild`）。自定义 DMG 背景图需要 `Pillow`（`pip install Pillow`）。`build_dmg_macos.sh` 在 Pillow 缺失时会降级为 dmgbuild 内置箭头背景，不会阻断构建。
-
-`FRAMELEAN_RELEASE_PRIVATE_KEY` 保存 Windows 更新签名用的 32-byte Ed25519 seed 或其 base64 文本；workflow 会写入 runner 临时文件并通过 `FRAMELEAN_RELEASE_PRIVATE_KEY_FILE` 传给 Windows 发布脚本。
-
-## Signing Tool
-
-`tool/sign_windows_update.dart` generates the Windows `*.update.json`
-metadata for a built installer. It requires:
-
-```bash
-dart run tool/sign_windows_update.dart \
-  --input <setup.exe>          \
-  --private-key <32-byte-seed> \
-  --key-id <key-id>            \
-  --public-key <base64-pubkey>
-```
-
-The tool outputs a JSON file with `sha256`, `size`, and an
-`ed25519Signature`, consumed by Admin Web to publish the release.
-
-CI runs this automatically; the manual path above is only needed when
-CI is unavailable or the signing key is held offline.
-
-## Installer Definitions
-
-Installer definitions live under `installer/`, rather than `scripts/`,
-because they are packaged resources:
-
-```text
-installer/windows/FrameLean.iss
-```
+清理脚本删除仓库内的最终包、静态 libav SDK 与源码缓存、Flutter/Xcode 输出、Dart 缓存、Rust `target/` 和 `.workspace/` 下的日志。下次打包时会重新生成；静态 libav SDK 缺失时，构建脚本会重新下载并编译依赖。计划和 release 草稿、源码、锁文件、协议 Schema、清理目标外的媒体文件及仓库外的应用数据会保留。脚本只删除列出的生成路径，不调用 `git clean`。

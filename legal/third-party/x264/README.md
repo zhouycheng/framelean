@@ -1,13 +1,8 @@
 # x264 / libx264
 
-FrameLean's bundled FFmpeg runtime is built with x264 / libx264 enabled for
-H.264 encoding.
+The current static libav source recipe enables x264 / libx264. The pinned source commit is recorded in `scripts/build/build_ffmpeg_macos_arch.sh` and `scripts/build/build_ffmpeg_windows_x64.sh`; generated build metadata is authoritative for an actual package.
 
-Upstream source:
+- Upstream: https://code.videolan.org/videolan/x264
+- License: GPL
 
-- <https://code.videolan.org/videolan/x264>
-- <https://www.videolan.org/developers/x264.html>
-
-x264 is GPL-licensed. Because FrameLean distributes an FFmpeg runtime with
-x264 enabled, release packages follow the GPLv3-or-later source and license
-delivery path documented in legal/SOURCE_OFFER.md.
+Before public distribution, verify the exact source commit, include its corresponding source materials, and refresh the package notices. A recipe in the repository is not evidence that a binary package was built or released.

@@ -17,7 +17,7 @@ When docs and implementation disagree, verify the real project state and update 
 - FrameLean project Skills belong under `.agents/skills/`; tool-specific settings belong only in that tool's directory.
 - `CLAUDE.md` remains a thin adapter to this shared instruction file.
 - Preserve unrelated user changes. Do not stage, commit, push, revert, delete, or format them.
-- Use short-lived `feature/*`, `fix/*`, `chore/*`, `docs/*`, `release/*`, or `hotfix/*` branches; do not commit daily work directly to `main`.
+- `develop/next` is the active long-lived integration branch. Create short-lived `feature/*`, `fix/*`, `chore/*`, `docs/*`, `release/*`, or `hotfix/*` branches from it and merge them back through PR / MR; do not develop on the frozen `main` or `develop/v1.3.0-alpha` refs.
 - Use ignored `.workspace/` for temporary plans and release drafts, and ignored `worktrees/` for local worktrees.
 
 ## Working Rules

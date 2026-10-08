@@ -1,0 +1,19 @@
+[package]
+name = "framelean-ffi"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[lib]
+name = "framelean_fll"
+crate-type = ["cdylib"]
+
+[dependencies]
+framelean-analysis = { path = "../framelean-analysis" }
+framelean-core = { path = "../framelean-core" }
+framelean-decision = { path = "../framelean-decision" }
+framelean-environment = { path = "../framelean-environment" }
+framelean-ffmpeg = { path = "../framelean-ffmpeg" }
+framelean-runtime = { path = "../framelean-runtime" }
+serde = { workspace = true }
+serde_json = { workspace = true }

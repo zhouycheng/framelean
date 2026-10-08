@@ -1,239 +1,82 @@
-# FrameLean 工作流
+# FrameLean 开发工作流
 
-## 文档目的
+## 核心规则
 
-这份文档合并 FrameLean 的项目执行、Git、提交、PR 和发布规则。它约束开发者和 AI agent 如何理解需求、准备分支、设计验证、实现、更新文档、准备提交和发布说明。
+- `develop/next` 是长期集成线；旧 `main` 与 `develop/v1.3.0-alpha` 冻结归档。
+- 代码位于三个独立项目：Flutter `desktop-client/`、Rust Work `fengine/`、Rust 动态引擎 `fll/`。协议契约位于 `protocol/`。
+- 改动按当前事实验证。Alpha 功能、测试或发布文档不能替代 `develop/next` 的实现和验收证据。
+- 保留用户已有工作；不重置、覆盖、暂存、提交、推送、打 tag 或发布，除非用户明确要求对应 Git 外部动作。
 
-## 核心原则
+## 分支和工作区
 
-- 先理解项目，再讨论方案；不能只读用户描述。
-- 如果文档和当前代码不一致，并且代码已经明显推进到文档之后，以当前代码为准，同时更新文档。
-- 如果代码偏离仍有效的架构或流程规则，需要指出风险。
-- 非平凡需求需要先讨论需求、替代方案、风险、边界和验证方式。
-- 实现必须严格服从已确认范围，不顺手扩大功能。
-- `main` 是唯一长期主干，日常改动通过短生命周期分支和 PR / MR 合入。
+日常改动从最新 `develop/next` 创建短生命周期的 `feature/*`、`fix/*`、`chore/*`、`docs/*`、`release/*` 或 `hotfix/*` 分支，完成后经 PR / MR 合回集成线。不要在冻结归档线开发。若当前目录有其他未完成工作，优先使用 `worktrees/<task-name>` 隔离。
 
-## 执行阶段
-
-### 1. 需求理解与方案讨论
-
-开始前通常需要：
-
-1. 阅读 `AGENTS.md`。
-2. 阅读 `CONTEXT.md`、`docs/README.md` 和相关 `docs/` 文档。
-3. 搜索并阅读相关源码、测试、脚本和配置。
-4. 对比文档和项目实况，判断文档是否滞后。
-5. 如果方案依赖框架、API、工具链或成熟产品做法，查阅官方文档或可信资料。
-
-使用 FrameLean 项目级 skills 时，先按 `.agents/skills/README.md` 的共享预读协议读取项目事实，再递增读取领域文档、相关源码和 Git 事实。
-
-讨论时需要说明方案长处、短板、风险、成本、测试难度和长期维护影响。
-
-### 2. 分支或 worktree 准备
-
-进入执行前确认 Git 状态：
-
-```bash
-git status --short
-git branch --show-current
-```
-
-分支类型：
+## 依赖方向
 
 ```text
-feature/*
-fix/*
-chore/*
-docs/*
-release/*
-hotfix/*
+desktop-client → protocol/v1 → fengine → protocol/fll-abi/v1 → fll
 ```
 
-规则：
+- Flutter 仅通过 `EngineGateway` 调 Work，不启动 FFmpeg/FFprobe CLI，也不直接加载 FLL。
+- Work 不静态链接 FLL crate；运行时动态加载同目录 `framelean_fll`。
+- FLL 使用进程内 libav。应用 UI、设置和应用本地数据属于 Flutter；媒体运行时和处理属于 FLL。
 
-- 不在 `main` 上直接提交日常开发改动。
-- 分支名使用小写英文、数字和短横线。
-- 当前工作区有其他未完成改动时，优先使用 `worktrees/<task-slug>` 创建独立 worktree。
-- 新分支应基于最新远程 `main`；创建或打开分支后检查远程是否有新提交。
+## 本地验证
 
-如果创建分支时报 `cannot lock ref`，先区分真实 ref 命名冲突和环境 / 沙盒写 `.git` 失败，不要反复更换有效分支名。
+Flutter：
 
-### 3. 测试与验证设计
-
-写代码前先明确验证方式：
-
-- bug 修复：设计复现测试或回归测试。
-- 新功能：优先覆盖 domain、application use case 和关键 UI / widget 行为。
-- 架构整理：先保护现有行为，再移动边界。
-- 文档结构调整：检查路径引用、入口一致性和旧文档移除是否干净。
-- 脚本和发布流程：验证命令、产物路径和关键文件布局。
-
-### 4. 实现
-
-规则：
-
-- 不顺手增加未确认功能。
-- 不做无关重构或大范围格式化。
-- 遵循当前项目架构：`features -> application -> domain`，`infrastructure` 实现 application 抽象并依赖 domain。
-- 优先复用项目已有 helper、provider、use case 和组件模式。
-- 单文件不应无必要膨胀到 800 行以上；除非是生成文件、框架入口或强内聚库文件。
-
-### 5. 审查与验证
-
-Dart / Flutter 改动默认执行：
-
-```bash
-dart format --output=none --set-exit-if-changed <changed-dart-files>
+```sh
+cd desktop-client
+flutter pub get
+dart format --output=none --set-exit-if-changed lib test
 flutter analyze
 flutter test
 ```
 
-根据范围追加：
+Rust Work 的 framing 和错误边界可独立检查：
 
-- 构建脚本变更：执行对应脚本或做语法 / 产物结构验证。
-- 打包变更：验证 macOS 或 Windows 产物中的关键运行时文件。
-- CI 变更：验证 YAML 和 workflow 关键路径。
-- UI 变更：进行手动检查或截图验证。
-- 架构变更：检查依赖方向、测试覆盖和文档是否同步。
-- 文档重构：运行路径引用扫描和 `git diff --check`。
-
-### 6. 文档同步
-
-当改动影响架构、数据模型、测试、发布流程、用户可见行为或开发者工作流时，必须更新文档。
-
-文档入口：
-
-- 项目上下文：`CONTEXT.md`
-- 变更摘要：`CHANGELOG.md`
-- 当前任务：`docs/work/active.md`
-- 决策索引：`docs/work/decisions.md`
-- 决策正文：`docs/decisions/YYMMDD-summary.md`
-- 版本事实设计：`docs/releases/vX.Y.Z/*.md`
-- 经验总结：`docs/lessons.md`
-- 工程事实：`docs/develop/*.md`
-- 项目级 skills：`.agents/skills/framelean-*`
-
-不再创建每日日志或一 bug 一文档。bug 修复中的可复用经验写入 `docs/lessons.md`；若修复背后形成重要长期选择，写入 `docs/decisions/`。
-
-## Changelog
-
-正式版本收口时更新根目录 `CHANGELOG.md`，记录用户可感知的版本级变化。日常提交不写逐日 `No Release` 流水。
-
-格式：
-
-```text
-YYYY-MM-DD｜vX.Y.Z｜Release
-
-### Added
-### Changed
-### Fixed
+```sh
+cargo check --manifest-path fengine/Cargo.toml --all-targets --locked
+cargo test --manifest-path fengine/Cargo.toml --locked
 ```
 
-只保留有内容的章节，不粘贴验证日志、提交清单或完整开发过程。
+FLL 使用各目标平台的静态 libav SDK。macOS 和 Windows runtime 构建脚本会准备/检查依赖、构建 FLL 与 Work、核对架构和动态 libav 依赖：
 
-## Worktree
+macOS 构建依赖包括 Xcode/Clang、CMake、Make、NASM 和 `pkg-config`。Homebrew 中后两者的 formula 名为 `nasm` 和 `pkgconf`；按工作站供给流程安装并刷新本机清单。
 
-FrameLean 本地 worktree 统一放在：
-
-```text
-worktrees/<task-name>
+```sh
+scripts/build/build_runtime_macos.sh
+# Windows：在 MSYS2 MINGW64 shell
+bash scripts/build/build_runtime_windows.sh
 ```
 
-`worktrees/` 不进入版本库。常用命令：
+三项目真实闭环由 `desktop-client/test/engine_gateway_smoke_test.dart` 验证；需要并排构建的 Work 与 FLL，通过 `FRAMELEAN_FENGINE_BINARY` 提供 Work 路径。该测试启动 detached Work、请求 ping、分析临时 WAV、断开并重连，再执行测试关闭。
 
-```bash
-git fetch origin
-git worktree add worktrees/example-task -b feature/example-task origin/main
-git worktree list
-git worktree remove worktrees/example-task
-git worktree prune
+macOS runtime 构建后，在仓库根目录执行真实 smoke：
+
+```sh
+RUNTIME="$PWD/build/runtime/macos-$(uname -m | sed 's/x86_64/x64/')"
+cd desktop-client
+env -u FRAMELEAN_FLL_LIBRARY FRAMELEAN_FENGINE_BINARY="$RUNTIME/framelean-engine" \
+  flutter test test/engine_gateway_smoke_test.dart --reporter expanded
 ```
 
-## 提交信息
+smoke 清除开发用 FLL 路径覆盖，确保 Work 从自身同目录加载真实动态库；它校验 WAV 的 PCM 编码、采样率、声道数和重连前后的 Work PID。
 
-推荐使用 Conventional Commits 风格：
+平台包入口：
 
-| 前缀 | 含义 |
-| --- | --- |
-| `feat` | 新功能 |
-| `fix` | 缺陷修复 |
-| `chore` | 工程治理 |
-| `docs` | 文档 |
-| `test` | 测试 |
-| `refactor` | 重构 |
-| `build` | 构建或依赖 |
-| `ci` | CI 配置 |
-
-推荐格式：
-
-```text
-<type>(scope): 中文摘要
+```sh
+scripts/build/package_macos.sh
+# Windows：先从 MSYS2 MINGW64 构建 Rust runtime，再运行：
+./scripts/build/package_windows.ps1
 ```
 
-交付时给出推荐提交标题、提交范围，以及是否需要正文和原因；只有复杂变更才提供正文。
+打包必须确认 Runner 可执行文件、Work 和 FLL 为目标架构；包内存在法律材料；Work 默认从自身同目录加载 FLL；最终包内 smoke 成功。缺少动态库、ABI 不匹配或运行时初始化失败必须报告错误且停止启动。
 
-## PR / MR 描述
+macOS arm64 打包仅在本次构建进程设置 `FLUTTER_MACOS_ARM64_ONLY=true`，不修改全局 Flutter 配置。runtime 复制后重新 ad hoc 签名并通过 `codesign --verify --deep --strict`。ZIP 通过压缩数据检查，旁置 `.zip.files.txt` 完整条目清单和 `.zip.sha256` 哈希。源码和包内文件核对见 `docs/develop/package-checklist.md`；Release App 手动验收从最终 ZIP 解压启动。
 
-PR / MR 标题建议沿用：
+## 文档与发布
 
-```text
-<type>(scope): 中文摘要
-```
+架构、数据、协议、打包、用户行为和可复用工程事实变化时更新 `docs/`、`CONTEXT.md` 与相关项目 README。正式版本再更新根目录 `CHANGELOG.md`；日常改动不写 `No Release` 流水。
 
-普通 PR 使用精简描述，正文长度随评审风险变化，不按固定章节数扩写：
-
-```markdown
-## Summary
-
-- 用一段短文或 2～5 个 bullet 说明改了什么，以及不明显时为什么要改。
-- 需要时附 `Closes #...` 或相关设计文档链接。
-
-## Notes
-
-- 仅写评审者必须知道的迁移、兼容性、风险、截图或特殊决策；没有就删除整个章节。
-```
-
-PR description 不写 `Verification`，不复制例行测试命令、文件清单、提交摘要、文档清单或通用回滚套话。验证仍是合并门禁，由 CI、检查记录和评审状态承载。普通 PR 正文建议控制在 5～15 行；高风险迁移可以按需增加说明。
-
-## 发布规则
-
-正式发布使用语义化 tag：
-
-```text
-v主版本.次版本.修订版本
-```
-
-发布包名称从 `pubspec.yaml` 的语义化版本读取，不包含 `+build` 后缀。例如 `version: 1.2.0+4`：
-
-```text
-FrameLean-v1.2.0.dmg（macOS Universal 2）
-FrameLean-v1.2.0-windows-x64.zip
-FrameLean-v1.2.0-windows-x64-setup.exe
-```
-
-Release description 只保留用户可感知信息：
-
-```markdown
-## 版本摘要
-
-## 主要变更
-
-## 重要修复
-
-## 兼容性与已知问题
-
-## 完整记录
-```
-
-版本摘要使用一段短文，其余每节通常保留 3～6 个 bullet；空章节直接删除。例行测试日志、内部工作流、文件清单、打包检查表、页面已展示的产物清单和通用回滚说明不进入公开 Release，必要时链接 `CHANGELOG.md`、迁移文档或内部发布记录。
-
-## 合并要求
-
-每个 PR / MR 合并前至少确认：
-
-- 分支从最新 `main` 创建，或已经同步最新 `main`。
-- 改动范围和分支类型匹配。
-- 没有混入无关格式化、生成文件或临时文件。
-- 已运行必要检查。
-- 如果改动影响用户行为，已补充或更新测试。
-- 如果改动影响架构、测试、发布或使用方式，已同步更新文档。
+当前没有已验收的公开 Release 流程。构建包不等于已确定版本、签名、公证、更新协议或公开发布。用户明确授权前不创建 tag、不发布、不推送。

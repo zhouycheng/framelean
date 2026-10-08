@@ -16,6 +16,6 @@ Write a practical Chinese plan adapted to the task. Include:
 - Validation coverage and commands or inspection methods.
 - Material compatibility, migration, platform, or rollback risks.
 
-Respect `features -> application -> domain`, with `infrastructure` implementing application abstractions and `app` owning composition, shell, and shared presentation concerns. Do not force a layer into the task when it is not involved.
+Follow the architecture currently documented in `docs/develop/architecture.md`. The restarted branch is a minimal Flutter shell; do not assume the former `features/application/domain/infrastructure` structure until a new architecture is explicitly chosen.
 
 Default to inline output. Save a plan that must survive the current conversation to `.workspace/plans/YYMMDD-feature-slug.md`; do not place temporary plans in `docs/`. Suggest a branch only when the user requests one or the workflow needs it. Do not implement code in this Skill.

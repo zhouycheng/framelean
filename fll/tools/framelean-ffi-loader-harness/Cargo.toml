@@ -1,0 +1,12 @@
+[package]
+name = "framelean-ffi-loader-harness"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+libloading = "0.8"
+serde_json = "1"
+
+# This is a standalone verification package, not an FLL product workspace member.
+[workspace]

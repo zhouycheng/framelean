@@ -1,0 +1,14 @@
+[package]
+name = "framelean-decision"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+blake3.workspace = true
+framelean-core = { path = "../framelean-core" }
+framelean-media = { path = "../framelean-media" }
+framelean-analysis = { path = "../framelean-analysis" }
+framelean-environment = { path = "../framelean-environment" }
+schemars.workspace = true
+serde.workspace = true

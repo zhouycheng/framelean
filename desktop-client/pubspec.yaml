@@ -1,0 +1,31 @@
+name: framelean
+description: FrameLean desktop media processing app.
+publish_to: 'none'
+
+version: 1.2.1+8
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: AlibabaPuHuiTi
+      fonts:
+        - asset: assets/fonts/alibaba_puhuiti/AlibabaPuHuiTi-3-55-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/alibaba_puhuiti/AlibabaPuHuiTi-3-65-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/alibaba_puhuiti/AlibabaPuHuiTi-3-75-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/alibaba_puhuiti/AlibabaPuHuiTi-3-85-Bold.ttf
+          weight: 700

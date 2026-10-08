@@ -1,3 +1,0 @@
-qmc-decrypt source: https://github.com/bczhc/qmc-decrypt.git
-qmc-decrypt commit: 12d758a6a08635b4ab85b6dca05025fdbcc26520
-Built by: scripts/build/build_qmc_decrypt_macos_arm64.sh

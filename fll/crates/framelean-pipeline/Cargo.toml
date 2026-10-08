@@ -1,0 +1,9 @@
+[package]
+name = "framelean-pipeline"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+framelean-core = { path = "../framelean-core" }
+framelean-media = { path = "../framelean-media" }

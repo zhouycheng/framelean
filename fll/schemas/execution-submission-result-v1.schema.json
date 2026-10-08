@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExecutionSubmissionResult",
+  "type": "object",
+  "properties": {
+    "execution_id": {
+      "type": "string"
+    },
+    "queue_position": {
+      "type": "integer",
+      "format": "uint",
+      "minimum": 0
+    },
+    "queue_revision": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "state": {
+      "$ref": "#/$defs/ExecutionTaskState"
+    }
+  },
+  "required": [
+    "execution_id",
+    "state",
+    "queue_position",
+    "queue_revision"
+  ],
+  "$defs": {
+    "ExecutionTaskState": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "preempting",
+        "preempted",
+        "resuming",
+        "pause_requested",
+        "paused",
+        "cancel_requested",
+        "cancelled",
+        "completed",
+        "failed"
+      ]
+    }
+  }
+}

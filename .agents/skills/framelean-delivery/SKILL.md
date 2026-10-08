@@ -13,7 +13,7 @@ Read `.agents/skills/README.md` first and follow the shared pre-read protocol. A
 
 ## Documentation Calibration
 
-Identify which facts the changed files can affect, then inspect only those current-fact documents. Typical targets are `CONTEXT.md`, `CHANGELOG.md`, the relevant `docs/work/`, `docs/releases/`, `docs/decisions/`, `docs/develop/`, `docs/reference/`, or `.agents/skills/` entries. Use `rg` for stale names and paths instead of opening the entire documentation tree.
+Identify which facts the changed files can affect, then inspect only those current-fact documents. Typical targets are `CONTEXT.md`, `CHANGELOG.md`, the relevant `docs/work/`, `docs/develop/`, `docs/reference/`, or `.agents/skills/` entries. Release documents may be created under `docs/releases/` when a version is actually ready. Use `rg` for stale names and paths instead of opening the entire documentation tree.
 
 ## Packaging Freshness Check
 
@@ -24,22 +24,26 @@ Inspect the current source of truth instead of trusting existing docs:
 ```text
 .github/workflows/*.yml
 scripts/README.md
-scripts/release/*
-macos/Runner/Info.plist
-macos/Runner/Configs/*.xcconfig
-installer/windows/*
-tool/sign_windows_update.dart
+scripts/build/package_macos.sh
+scripts/build/package_windows.ps1
+desktop-client/macos/Runner/Info.plist
+desktop-client/macos/Runner/Configs/*.xcconfig
+desktop-client/windows/CMakeLists.txt
+fengine/Cargo.toml
+fll/Cargo.toml
+legal/
 ```
 
 Use targeted `rg` searches for update/signing variables such as `FRAMELEAN_UPDATE`, `FRAMELEAN_SPARKLE`, `SUPublicEDKey`, `SUFeedURL`, `FRAMELEAN_RELEASE`, `notarization`, `sign_update`, and artifact paths.
 
 Check at minimum:
 
-- GitHub Actions pass required Variables / Secrets / env values into the release scripts.
-- Local release commands and docs match the current script parameters, env names, artifact names, and output paths.
-- macOS manual DMG updates inject `FRAMELEAN_UPDATE_BASE_URL` from local and CI packaging entry points; Sparkle `SUFeedURL` / `SUPublicEDKey` is checked only when the Sparkle route is explicitly enabled.
-- Windows update base URL, trusted key ids, public keys, private-key-file signing, and `*.update.json` generation are wired from local and CI packaging entry points.
-- Missing release configuration fails closed instead of producing artifacts that look releasable but lack update configuration.
+- Active CI and local packaging entry points pass the required configuration to the current release scripts.
+- Artifact names, contents, signing, update behavior, and output paths match the active scripts and generated artifacts.
+- Missing release configuration fails clearly rather than producing an incomplete artifact that appears ready.
+- Optional mechanisms such as FFmpeg bundling or Sparkle are checked only if the current app and verified packaging path actually use them.
+
+The new Work/FLL packaging path requires a platform-specific static libav SDK and an observed package smoke; configuration files alone are not evidence that the app can be released.
 
 If the check finds drift, update the stale script, workflow, YAML, or docs before final delivery, or explicitly report the blocker. Do not copy routine packaging checks into the PR description; include only a material unresolved risk under optional notes.
 
@@ -47,8 +51,8 @@ If the check finds drift, update the stale script, workflow, YAML, or docs befor
 
 - Update `CHANGELOG.md` when the change is worth version-level recall.
 - Update `docs/releases/` when a stable shipped design or workflow fact changed.
-- Update `docs/decisions/` and `docs/work/decisions.md` when an important durable decision was made.
-- Update `docs/lessons.md` when the work produced a reusable lesson.
+- Update `docs/work/decisions.md` and the affected engineering fact when an important durable decision was made.
+- Add reusable lessons to the engineering fact they affect; create a separate lessons document only when multiple current lessons justify it.
 - Update `docs/work/active.md` when current task status changed.
 - Update `AGENTS.md`, `CLAUDE.md`, `README.md`, or `.agents/skills/` when agent workflow or developer workflow changed.
 - Do not create `docs/archive/`, `docs/features/`, `docs/plans/`, daily logs, or one-bug-one-file notes.

@@ -34,10 +34,12 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
+/desktop-client/build/
 /coverage/
 
 # Symbolication related
@@ -51,20 +53,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# FFmpeg & FFprobe
-third_party/ffmpeg/macos-arm64/ffmpeg
-third_party/ffmpeg/macos-arm64/ffprobe
-third_party/ffmpeg/macos-x64/ffmpeg
-third_party/ffmpeg/macos-x64/ffprobe
-third_party/ffmpeg/macos-universal/ffmpeg
-third_party/ffmpeg/macos-universal/ffprobe
-third_party/ffmpeg/windows-x64/ffmpeg.exe
-third_party/ffmpeg/windows-x64/ffprobe.exe
-
-# QMC adapter build outputs
-third_party/audio_adapters/qmc/macos-arm64/qmc-decrypt
-third_party/audio_adapters/qmc/macos-x64/qmc-decrypt
-third_party/audio_adapters/qmc/macos-universal/qmc-decrypt
+# Rust project outputs
+/fengine/target/
+/fll/target/
 
 # Local agent runtime data. Shared agent instructions under .agents/skills/
 # are committed, but local caches and logs are not.

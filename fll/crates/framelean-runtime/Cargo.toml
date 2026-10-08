@@ -1,0 +1,20 @@
+[package]
+name = "framelean-runtime"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+framelean-core = { path = "../framelean-core" }
+framelean-media = { path = "../framelean-media" }
+framelean-pipeline = { path = "../framelean-pipeline" }
+framelean-plugin = { path = "../framelean-plugin" }
+framelean-analysis = { path = "../framelean-analysis" }
+framelean-environment = { path = "../framelean-environment" }
+framelean-decision = { path = "../framelean-decision" }
+framelean-ffmpeg = { path = "../framelean-ffmpeg" }
+schemars.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
