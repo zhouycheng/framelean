@@ -10,7 +10,9 @@ FrameLean 是面向 macOS 和 Windows 的本地桌面媒体压缩与格式处理
 
 2026-10-07 已在 macOS arm64 构建静态 libav SDK、FLL Release dylib 与 Work，并通过真实 Flutter gateway smoke：PCM WAV 被识别为 8000 Hz、单声道，新的 Gateway 实例接回同一个 Work PID。FLL 的 136 项测试、Work 的 4 项测试及 Flutter 分析通过。
 
-2026-10-08 已完成 macOS arm64 Release App / ZIP 打包、包内 gateway smoke、解压后 ad hoc 签名完整性检查，以及 Release App 默认路径连接和 WAV 分析的手动验证。打包生成完整文件清单与 SHA-256；核对方案见 `docs/develop/package-checklist.md`。Windows、Intel/Universal 2、Developer ID 签名与公证仍未验收。
+2026-10-08 已完成 macOS arm64 Release App / ZIP 打包、包内 gateway smoke、解压后 ad hoc 签名完整性检查，以及 Release App 默认路径连接和 WAV 分析的手动验证。打包生成完整文件清单与 SHA-256；核对方案见 `docs/develop/package-checklist.md`。Intel/Universal 2、Developer ID 签名与公证仍未验收。
+
+2026-10-11，PR #70 的 Windows 修复通过双平台 CI、Windows x64 Release ZIP 打包及包内 gateway smoke。已下载 ZIP 并核对摘要、压缩完整性、x64 架构、DLL 依赖、字体和法律材料。Windows 桌面手动验收因暂无设备而暂缓。
 
 旧版数据库不迁移，初始应用数据为空。用户源媒体和输出媒体不会由代码清理处理。
 
@@ -28,4 +30,4 @@ FrameLean 是面向 macOS 和 Windows 的本地桌面媒体压缩与格式处理
 - `develop/next` 是当前集成目标；功能通过短生命周期分支合入。
 - 旧 `main` 和 `develop/v1.3.0-alpha` 冻结。`archive-main-2026-10-07`、`archive-alpha-v1.3.0-2026-10-07` 保存原提交。
 - 旧项目经验与 Alpha 调用链、未完成边界见 `docs/develop/restart-baseline.md`。
-- 工作区未提交清理和重建改动均是现有资产；不要重置、覆盖、暂存或提交。
+- 工作区中其他任务的已有修改属于现有资产，按当前 Git 状态核实并保留。

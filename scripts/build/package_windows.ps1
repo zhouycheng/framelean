@@ -26,13 +26,16 @@ try {
 
 $AppDirectory = Join-Path $Root 'desktop-client/build/windows/x64/runner/Release'
 $BundledEngine = Join-Path $AppDirectory 'framelean-engine.exe'
-$BundledFll = Join-Path $AppDirectory 'framelean_fll.dll'
-if (-not (Test-Path -LiteralPath $BundledEngine) -or -not (Test-Path -LiteralPath $BundledFll)) {
-  throw 'The Windows package is missing framelean-engine.exe or framelean_fll.dll'
-}
-if (-not (Test-Path -LiteralPath (Join-Path $AppDirectory 'legal/LICENSE')) -or
-    -not (Test-Path -LiteralPath (Join-Path $AppDirectory 'legal/NOTICE.md'))) {
-  throw 'The Windows package is missing legal materials'
+foreach ($RequiredFile in @(
+  'FrameLean.exe', 'framelean-engine.exe', 'framelean_fll.dll', 'flutter_windows.dll',
+  'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll',
+  'data/app.so', 'data/icudtl.dat', 'legal/LICENSE', 'legal/NOTICE.md'
+)) {
+  $RequiredPath = Join-Path $AppDirectory $RequiredFile
+  if (-not (Test-Path -LiteralPath $RequiredPath -PathType Leaf) -or
+      (Get-Item -LiteralPath $RequiredPath).Length -eq 0) {
+    throw "The Windows package is missing or has an empty required file: $RequiredFile"
+  }
 }
 
 $env:FRAMELEAN_FENGINE_BINARY = $BundledEngine

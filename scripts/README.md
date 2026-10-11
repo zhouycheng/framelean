@@ -21,6 +21,14 @@ FrameLean 有三个独立可构建项目。以下脚本服务于新主线；FFmp
 
 Windows Rust runtime 必须在 MSYS2 MINGW64 shell 执行 `build_runtime_windows.sh` 后，再运行 PowerShell 打包入口。
 
+Windows CI 的 MSYS2 使用 `path-type: inherit`，保留前一步安装的 Rust 工具路径。本地运行时也需确保 `rustup`、`cargo`、`gcc`、`pkg-config`、`cygpath` 和 `objdump` 位于 shell 的 PATH；runtime 入口在构建静态 SDK 前检查这些工具并准备 Rust target。
+
+Windows CI 在 SDK 构建完成后独立保存缓存；以最后生成的 `ffmpeg-build-info.txt` 为完成标记，后续 Rust 编译或测试失败也能保留完整 SDK。
+
+Windows 静态 SDK 的 pkg-config 链接项与 MinGW C/GNU runtime 放在同一个静态链接组中，处理 Rust `-nodefaultlibs` 下的库顺序和依赖解析；Windows 系统 DLL 仍通过导入库调用。
+
+Windows CMake 安装步骤通过 `InstallRequiredSystemLibraries` 复制 Visual C++ 运行库到 Runner 旁。PowerShell 打包入口会检查 Runner、Work/FLL、Flutter DLL、Visual C++ DLL、AOT/ICU 数据及法律材料均存在且非空，然后执行包内 smoke。
+
 ## 清理本地构建物
 
 macOS 或 MSYS2 Bash：

@@ -15,7 +15,7 @@
 | Flutter 前端 | `desktop-client/pubspec.yaml`、`pubspec.lock` | 存在 |
 | Flutter 入口与网关 | `desktop-client/lib/main.dart`、`lib/engine_gateway.dart` | 存在 |
 | Flutter smoke | `desktop-client/test/engine_gateway_smoke_test.dart` | 存在 |
-| 平台工程 | `desktop-client/macos/Runner.xcodeproj/project.pbxproj`、`desktop-client/windows/CMakeLists.txt` | 存在；Windows 构建未验收 |
+| 平台工程 | `desktop-client/macos/Runner.xcodeproj/project.pbxproj`、`desktop-client/windows/CMakeLists.txt` | 存在；Windows x64 CI 构建通过（PR #70） |
 | 品牌资源 | `desktop-client/assets/app_icon/`、`assets/fonts/alibaba_puhuiti/` | 5 个 PNG、4 个非空字体文件存在 |
 | Work 构建入口 | `fengine/Cargo.toml`、`Cargo.lock` | 存在 |
 | Work 服务与动态适配 | `fengine/src/main.rs`、`src/fll.rs` | 存在 |
@@ -86,6 +86,25 @@ shasum -a 256 -c build/packages/FrameLean-macos-arm64.zip.sha256
 
 每次新增运行依赖时，先更新包内必需文件和实际加载检查，再生成新的清单与哈希。手动 App 验收须从当次 ZIP 解压启动，避免误用旧 Debug App 或开发环境覆盖路径。
 
+## 5. Windows x64 CI 包
+
+2026-10-11，PR #70 代码提交 `883c616` 的 [Windows CI](https://github.com/zhouycheng/framelean/actions/runs/38110143981) 通过 Rust 测试、Flutter 分析/测试、Release 构建及包内 gateway smoke。Windows FLL 的 137 项测试和 Work 的 4 项测试均通过，包括文件身份、真实媒体转换与输出防覆盖用例。
+
+下载并核对的 ZIP 位于 `build/packages/ci-883c616/FrameLean-windows-x64.zip`，包含 38 个条目。GitHub artifact 的 SHA-256 摘要匹配，内部 ZIP 的 CRC 通过；ZIP 本身的 SHA-256 为 `6d543e8830d2a1030ea123a48455d88bc282aa11ab1dcb6c5669f942fa970bd0`。
+
+| 检查对象 | 本次结果 |
+| --- | --- |
+| `FrameLean.exe`、`framelean-engine.exe`、`framelean_fll.dll`、`flutter_windows.dll` | 存在、非空、PE x64 |
+| FLL ABI 导出 | 仅 `framelean_fll_get_api` |
+| Work/FLL DLL 导入 | 无外部动态 libav、libgcc、libstdc++ 或 libwinpthread |
+| Visual C++ 运行库 | CMake 自动安装；Runner 所需 `msvcp140.dll`、`vcruntime140.dll`、`vcruntime140_1.dll` 均随包携带 |
+| Flutter 数据 | `data/app.so`、`data/icudtl.dat`、资产清单存在且非空 |
+| 字体 | 四个 Alibaba PuHuiTi TTF 存在且非空，与 FontManifest 声明一致 |
+| 法律材料 | LICENSE、COPYING、NOTICE、THIRD_PARTY_NOTICES、SOURCE_OFFER 均存在且非空 |
+| 包内 smoke | 默认加载 FLL，PCM WAV 8000 Hz / 单声道分析及同一 Work PID 重连通过 |
+
+旁置 `.zip.files.txt`、`.zip.sha256` 和 `FrameLean-windows-x64.audit.json` 保存完整文件清单、包哈希和核对报告。下载、报告和二进制均位于 Git 忽略目录中。本轮验收范围为 CI 和包内容；Windows 桌面手动验收待有设备后完成。
+
 ## 验收范围
 
-当前是本机 arm64 开发验证包，使用 ad hoc 签名。Developer ID 签名、公证、Intel/Universal 2 和 Windows 打包仍未验收。Windows 平台工程存在不能替代 Windows 构建结果。当前 UI 为引擎诊断入口，未完成产品媒体处理工作流。
+macOS arm64 开发验证包使用 ad hoc 签名。Developer ID 签名、公证和 Intel/Universal 2 尚未验收。Windows x64 CI 与包内容验收已通过，桌面手动验收暂缓。当前 UI 为引擎诊断入口，未完成产品媒体处理工作流。

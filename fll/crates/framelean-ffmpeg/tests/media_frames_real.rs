@@ -70,6 +70,23 @@ fn real_libav_video_generates_preview_frames_and_a_visible_thumbnail() {
 }
 
 #[test]
+fn real_libav_small_rgb_frames_preserve_pixels_across_padded_rows() {
+    let fixture = TestDirectory::new("small-rgb-frames");
+    let input_path = fixture.path.join("input.avi");
+    fs::write(&input_path, uncompressed_avi_fixture()).unwrap();
+    let adapter = FfmpegAdapter::new().unwrap();
+    for _ in 0..32 {
+        for width in [1, 2] {
+            let frame = adapter
+                .decode_video_frame(&input_path, 1_000_000, Some(width))
+                .unwrap();
+            assert_eq!((frame.width, frame.height), (width, width));
+            assert_eq!(frame.rgb24, [0, 255, 0].repeat((width * width) as usize));
+        }
+    }
+}
+
+#[test]
 fn real_libav_decodes_converts_encodes_and_muxes_video_without_cli() {
     let fixture = TestDirectory::new("video-transcode");
     let input_path = fixture.path.join("input.avi");
