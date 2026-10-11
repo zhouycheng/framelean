@@ -71,13 +71,16 @@ case "$(uname -s)" in
           libswresample libswscale libavutil
     )"
     rustflags="${RUSTFLAGS:-}"
+    # Rust disables default libraries; rescan static media dependencies with their C/GNU runtimes.
+    rustflags+=" -C link-arg=-Wl,--start-group,-Bstatic"
     for linker_flag in $pkg_config_flags; do
       case "$linker_flag" in
         -D*) continue ;;
       esac
       rustflags+=" -C link-arg=${linker_flag}"
     done
-    rustflags+=" -C link-arg=-static-libgcc -C link-arg=-static-libstdc++"
+    rustflags+=" -C link-arg=-lmingw32 -C link-arg=-lmingwex -C link-arg=-lmsvcrt -C link-arg=-lkernel32 -C link-arg=-lgcc -C link-arg=-lgcc_eh -C link-arg=-lwinpthread"
+    rustflags+=" -C link-arg=-Wl,--end-group,-Bdynamic"
     export RUSTFLAGS="$rustflags"
     ;;
 esac

@@ -15,3 +15,5 @@
 2026-10-11 核对提交 `57b2c7e` 的 GitHub Actions：macOS 构建成功；Windows 在静态 libav SDK 构建完成后因 MSYS2 找不到 `rustup` 失败，后续测试与打包被跳过。Windows CI 已调整为继承宿主 PATH，runtime 入口增加了构建前的工具检查和 Rust target 准备；修复后的 Windows CI 与最终 ZIP 解压启动仍待验证。
 
 PR #70 的首轮 CI 确认 PATH 问题已解决，macOS 构建通过；Windows 继续编译时发现文件身份识别使用了 nightly-only `MetadataExt` 方法。当前改为已有 `windows` 依赖提供的 Win32 文件信息接口，并增加硬链接与文件替换回归测试；SDK 缓存按完成标记独立保存。Windows 重验和 ZIP 内容核对仍在推进，本轮桌面手动验收因暂无 Windows 设备而暂缓。
+
+补充提交 `4304cb0` 的 macOS CI 通过；Windows 已越过文件身份编译错误，到 FLL 链接时因静态媒体库位于 C/GNU runtime 之后而出现未解析符号。完整 SDK 已成功保存缓存；Windows wrapper 已把媒体库及其 runtime 依赖纳入静态链接组，链接和后续测试待重验。

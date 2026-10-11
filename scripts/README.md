@@ -25,6 +25,8 @@ Windows CI 的 MSYS2 使用 `path-type: inherit`，保留前一步安装的 Rust
 
 Windows CI 在 SDK 构建完成后独立保存缓存；以最后生成的 `ffmpeg-build-info.txt` 为完成标记，后续 Rust 编译或测试失败也能保留完整 SDK。
 
+Windows 静态 SDK 的 pkg-config 链接项与 MinGW C/GNU runtime 放在同一个静态链接组中，处理 Rust `-nodefaultlibs` 下的库顺序和依赖解析；Windows 系统 DLL 仍通过导入库调用。
+
 ## 清理本地构建物
 
 macOS 或 MSYS2 Bash：
