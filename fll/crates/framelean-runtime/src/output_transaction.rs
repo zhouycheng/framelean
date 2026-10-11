@@ -76,7 +76,9 @@ impl OutputTransaction {
     }
 
     pub fn commit(mut self) -> Result<PathBuf> {
-        File::open(&self.working_path)
+        OpenOptions::new()
+            .write(true)
+            .open(&self.working_path)
             .and_then(|file| file.sync_all())
             .map_err(|error| output_error("cannot sync working output", error))?;
 

@@ -27,6 +27,8 @@ Windows CI 在 SDK 构建完成后独立保存缓存；以最后生成的 `ffmpe
 
 Windows 静态 SDK 的 pkg-config 链接项与 MinGW C/GNU runtime 放在同一个静态链接组中，处理 Rust `-nodefaultlibs` 下的库顺序和依赖解析；Windows 系统 DLL 仍通过导入库调用。
 
+Windows CMake 安装步骤通过 `InstallRequiredSystemLibraries` 复制 Visual C++ 运行库到 Runner 旁。PowerShell 打包入口会检查 Runner、Work/FLL、Flutter DLL、Visual C++ DLL、AOT/ICU 数据及法律材料均存在且非空，然后执行包内 smoke。
+
 ## 清理本地构建物
 
 macOS 或 MSYS2 Bash：
