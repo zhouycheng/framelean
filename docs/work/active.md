@@ -10,10 +10,10 @@
 
 打包入口使用本次进程环境限定 Flutter arm64 构建，并在复制 Work/FLL 后重新 ad hoc 签名与校验。Work 并行错误路径测试的临时目录改用现有 UUID 生成器，避免时间戳碰撞。
 
-下一平台验收是 Windows 构建和包内 smoke。Developer ID 签名、公证及 Intel/Universal 2 尚未验收。旧媒体 UI、旧 SQLite 数据和 Alpha 全量执行协议都没有迁入；双平台发布包验收尚未完成。
+2026-10-11，修复分支 `fix/windows-runtime-build`（PR #70）已完成 Windows x64 CI 与 ZIP 内容验收。代码提交 `883c616` 的 [Windows CI](https://github.com/zhouycheng/framelean/actions/runs/38110143981) 和 [macOS CI](https://github.com/zhouycheng/framelean/actions/runs/38110144182) 均通过。Windows 的 137 项 FLL 测试、4 项 Work 测试、Flutter 分析及测试通过；包内 gateway smoke 验证了 FLL 默认加载、PCM WAV 的 8000 Hz / 单声道分析和同一 Work PID 重连。
 
-2026-10-11 核对提交 `57b2c7e` 的 GitHub Actions：macOS 构建成功；Windows 在静态 libav SDK 构建完成后因 MSYS2 找不到 `rustup` 失败，后续测试与打包被跳过。Windows CI 已调整为继承宿主 PATH，runtime 入口增加了构建前的工具检查和 Rust target 准备；修复后的 Windows CI 与最终 ZIP 解压启动仍待验证。
+本轮修复了 MSYS2 Rust 工具路径、稳定 Win32 文件身份查询、静态库链接顺序、预览转换缓冲区对齐和输出刷盘句柄权限；完整 SDK 独立缓存，Windows 包携带 Visual C++ 运行库并检查必需文件。
 
-PR #70 的首轮 CI 确认 PATH 问题已解决，macOS 构建通过；Windows 继续编译时发现文件身份识别使用了 nightly-only `MetadataExt` 方法。当前改为已有 `windows` 依赖提供的 Win32 文件信息接口，并增加硬链接与文件替换回归测试；SDK 缓存按完成标记独立保存。Windows 重验和 ZIP 内容核对仍在推进，本轮桌面手动验收因暂无 Windows 设备而暂缓。
+已下载本次 Windows CI 产物，GitHub 产物摘要、ZIP CRC、38 个条目、核心二进制 x64 架构、DLL 依赖、FLL bootstrap 导出、四个字体与法律材料均核对通过。ZIP、文件清单、SHA-256 和核对报告位于 `build/packages/ci-883c616/`，详见 `docs/develop/package-checklist.md`。
 
-补充提交 `4304cb0` 的 macOS CI 通过；Windows 已越过文件身份编译错误，到 FLL 链接时因静态媒体库位于 C/GNU runtime 之后而出现未解析符号。完整 SDK 已成功保存缓存；Windows wrapper 已把媒体库及其 runtime 依赖纳入静态链接组，链接和后续测试待重验。
+当前 PR 尚未合入 `develop/next`。本轮按已确认范围完成 CI 和包内容验证；因暂无 Windows 设备，解压启动、桌面连接与 WAV 分析的手动验收暂缓。Developer ID 签名、公证及 Intel/Universal 2 尚未验收。当前 UI 仍是引擎诊断入口，下一功能阶段是打通首条用户媒体处理闭环。
