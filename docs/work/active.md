@@ -16,4 +16,4 @@
 
 已下载本次 Windows CI 产物，GitHub 产物摘要、ZIP CRC、38 个条目、核心二进制 x64 架构、DLL 依赖、FLL bootstrap 导出、四个字体与法律材料均核对通过。ZIP、文件清单、SHA-256 和核对报告位于 `build/packages/ci-883c616/`，详见 `docs/develop/package-checklist.md`。
 
-当前 PR 尚未合入 `develop/next`。本轮按已确认范围完成 CI 和包内容验证；因暂无 Windows 设备，解压启动、桌面连接与 WAV 分析的手动验收暂缓。Developer ID 签名、公证及 Intel/Universal 2 尚未验收。当前 UI 仍是引擎诊断入口，下一功能阶段是打通首条用户媒体处理闭环。
+本轮按已确认范围完成 CI 和包内容验证；因暂无 Windows 设备，解压启动、桌面连接与 WAV 分析的手动验收暂缓。Developer ID 签名、公证及 Intel/Universal 2 尚未验收。当前 UI 仍是引擎诊断入口，下一功能阶段是打通首条用户媒体处理闭环。

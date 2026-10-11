@@ -12,7 +12,7 @@ FrameLean 是面向 macOS 和 Windows 的本地桌面媒体压缩与格式处理
 
 2026-10-08 已完成 macOS arm64 Release App / ZIP 打包、包内 gateway smoke、解压后 ad hoc 签名完整性检查，以及 Release App 默认路径连接和 WAV 分析的手动验证。打包生成完整文件清单与 SHA-256；核对方案见 `docs/develop/package-checklist.md`。Intel/Universal 2、Developer ID 签名与公证仍未验收。
 
-2026-10-11，PR #70 的 Windows 修复分支通过双平台 CI、Windows x64 Release ZIP 打包及包内 gateway smoke。已下载 ZIP 并核对摘要、压缩完整性、x64 架构、DLL 依赖、字体和法律材料。Windows 桌面手动验收因暂无设备而暂缓；PR 尚未合入 `develop/next`。
+2026-10-11，PR #70 的 Windows 修复通过双平台 CI、Windows x64 Release ZIP 打包及包内 gateway smoke。已下载 ZIP 并核对摘要、压缩完整性、x64 架构、DLL 依赖、字体和法律材料。Windows 桌面手动验收因暂无设备而暂缓。
 
 旧版数据库不迁移，初始应用数据为空。用户源媒体和输出媒体不会由代码清理处理。
 
