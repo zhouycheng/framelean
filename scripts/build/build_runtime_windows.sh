@@ -9,11 +9,16 @@ case "$(uname -s)" in
   MINGW64_NT* | MSYS_NT* | MINGW32_NT*) ;;
   *) echo "run this script from the MSYS2 MINGW64 shell" >&2; exit 1 ;;
 esac
+for tool in rustup cargo gcc pkg-config cygpath objdump; do
+  command -v "$tool" >/dev/null 2>&1 || { echo "required Windows runtime build tool is not on PATH: $tool" >&2; exit 1; }
+done
+rustup target add "$TARGET"
+cargo --version
+
 if [[ ! -d "$SDK/include" || ! -d "$SDK/lib/pkgconfig" ]]; then
   "$ROOT/scripts/build/build_ffmpeg_windows_x64.sh"
 fi
 
-rustup target add "$TARGET"
 FRAMELEAN_FFMPEG_SDK_DIR="$SDK" \
   "$ROOT/scripts/build/with_bundled_ffmpeg.sh" \
   cargo build --manifest-path "$ROOT/fll/Cargo.toml" --release --locked --target "$TARGET"

@@ -11,3 +11,5 @@
 打包入口使用本次进程环境限定 Flutter arm64 构建，并在复制 Work/FLL 后重新 ad hoc 签名与校验。Work 并行错误路径测试的临时目录改用现有 UUID 生成器，避免时间戳碰撞。
 
 下一平台验收是 Windows 构建和包内 smoke。Developer ID 签名、公证及 Intel/Universal 2 尚未验收。旧媒体 UI、旧 SQLite 数据和 Alpha 全量执行协议都没有迁入；双平台发布包验收尚未完成。
+
+2026-10-11 核对提交 `57b2c7e` 的 GitHub Actions：macOS 构建成功；Windows 在静态 libav SDK 构建完成后因 MSYS2 找不到 `rustup` 失败，后续测试与打包被跳过。Windows CI 已调整为继承宿主 PATH，runtime 入口增加了构建前的工具检查和 Rust target 准备；修复后的 Windows CI 与最终 ZIP 解压启动仍待验证。
