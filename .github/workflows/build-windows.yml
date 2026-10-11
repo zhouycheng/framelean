@@ -50,7 +50,8 @@ jobs:
             tar
 
       - name: Cache static libav SDK
-        uses: actions/cache@v4
+        id: libav-cache
+        uses: actions/cache/restore@v4
         with:
           path: build/dependencies/ffmpeg/windows-x64
           key: ffmpeg-static-windows-${{ hashFiles('scripts/build/build_ffmpeg_windows_x64.sh') }}
@@ -58,6 +59,15 @@ jobs:
       - name: Build Rust runtime in MSYS2
         shell: msys2 {0}
         run: bash scripts/build/build_runtime_windows.sh
+
+      - name: Save completed static libav SDK
+        if: >-
+          ${{ !cancelled() && steps.libav-cache.outputs.cache-hit != 'true' &&
+              hashFiles('build/dependencies/ffmpeg/windows-x64/ffmpeg-build-info.txt') != '' }}
+        uses: actions/cache/save@v4
+        with:
+          path: build/dependencies/ffmpeg/windows-x64
+          key: ${{ steps.libav-cache.outputs.cache-primary-key }}
 
       - name: Analyze, smoke-test, and package
         shell: pwsh

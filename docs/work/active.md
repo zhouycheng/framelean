@@ -13,3 +13,5 @@
 下一平台验收是 Windows 构建和包内 smoke。Developer ID 签名、公证及 Intel/Universal 2 尚未验收。旧媒体 UI、旧 SQLite 数据和 Alpha 全量执行协议都没有迁入；双平台发布包验收尚未完成。
 
 2026-10-11 核对提交 `57b2c7e` 的 GitHub Actions：macOS 构建成功；Windows 在静态 libav SDK 构建完成后因 MSYS2 找不到 `rustup` 失败，后续测试与打包被跳过。Windows CI 已调整为继承宿主 PATH，runtime 入口增加了构建前的工具检查和 Rust target 准备；修复后的 Windows CI 与最终 ZIP 解压启动仍待验证。
+
+PR #70 的首轮 CI 确认 PATH 问题已解决，macOS 构建通过；Windows 继续编译时发现文件身份识别使用了 nightly-only `MetadataExt` 方法。当前改为已有 `windows` 依赖提供的 Win32 文件信息接口，并增加硬链接与文件替换回归测试；SDK 缓存按完成标记独立保存。Windows 重验和 ZIP 内容核对仍在推进，本轮桌面手动验收因暂无 Windows 设备而暂缓。

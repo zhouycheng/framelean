@@ -93,7 +93,7 @@ impl SourceFingerprint {
             canonicalization_reason,
             size_bytes: metadata.len(),
             modified_time_unix_nanos,
-            platform_file_id: platform_file_id(&metadata),
+            platform_file_id: platform_file_id(path, &metadata),
             quick_content_hash,
         })
     }
@@ -201,7 +201,7 @@ fn fingerprint_io_error(error: std::io::Error) -> framelean_core::EngineError {
 }
 
 #[cfg(unix)]
-fn platform_file_id(metadata: &fs::Metadata) -> Option<PlatformFileId> {
+fn platform_file_id(_path: &Path, metadata: &fs::Metadata) -> Option<PlatformFileId> {
     use std::os::unix::fs::MetadataExt;
     Some(PlatformFileId::Unix {
         device: metadata.dev(),
@@ -210,16 +210,26 @@ fn platform_file_id(metadata: &fs::Metadata) -> Option<PlatformFileId> {
 }
 
 #[cfg(windows)]
-fn platform_file_id(metadata: &fs::Metadata) -> Option<PlatformFileId> {
-    use std::os::windows::fs::MetadataExt;
+fn platform_file_id(path: &Path, _metadata: &fs::Metadata) -> Option<PlatformFileId> {
+    use std::os::windows::io::AsRawHandle;
+    use windows::Win32::Foundation::HANDLE;
+    use windows::Win32::Storage::FileSystem::{
+        BY_HANDLE_FILE_INFORMATION, GetFileInformationByHandle,
+    };
+
+    let file = File::open(path).ok()?;
+    let mut information = BY_HANDLE_FILE_INFORMATION::default();
+    // The file owns the handle and the output buffer remains valid for this call.
+    unsafe { GetFileInformationByHandle(HANDLE(file.as_raw_handle()), &mut information) }.ok()?;
     Some(PlatformFileId::Windows {
-        volume_serial: metadata.volume_serial_number().unwrap_or_default() as u64,
-        file_index: metadata.file_index().unwrap_or_default(),
+        volume_serial: u64::from(information.dwVolumeSerialNumber),
+        file_index: (u64::from(information.nFileIndexHigh) << 32)
+            | u64::from(information.nFileIndexLow),
     })
 }
 
 #[cfg(not(any(unix, windows)))]
-fn platform_file_id(_metadata: &fs::Metadata) -> Option<PlatformFileId> {
+fn platform_file_id(_path: &Path, _metadata: &fs::Metadata) -> Option<PlatformFileId> {
     None
 }
 
@@ -536,6 +546,40 @@ mod tests {
 
         assert_ne!(first.size_bytes(), second.size_bytes());
         assert_ne!(first.source_id().unwrap(), second.source_id().unwrap());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_file_identity_tracks_hard_links_and_file_replacement() {
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let directory = std::env::temp_dir().join(format!("framelean-file-id-{suffix}"));
+        fs::create_dir(&directory).unwrap();
+        let path = directory.join("媒体 文件.bin");
+        let link = directory.join("linked.bin");
+        let replacement = directory.join("replacement.bin");
+        fs::write(&path, b"fixture").unwrap();
+        fs::hard_link(&path, &link).unwrap();
+
+        let first = SourceFingerprint::from_local_file(&path).unwrap();
+        let repeated = SourceFingerprint::from_local_file(&path).unwrap();
+        let linked = SourceFingerprint::from_local_file(&link).unwrap();
+        assert!(matches!(
+            first.platform_file_id(),
+            Some(PlatformFileId::Windows { .. })
+        ));
+        assert_eq!(first.platform_file_id(), linked.platform_file_id());
+        assert_eq!(first.source_id().unwrap(), repeated.source_id().unwrap());
+
+        fs::copy(&path, &replacement).unwrap();
+        fs::remove_file(&path).unwrap();
+        fs::rename(&replacement, &path).unwrap();
+        let replaced = SourceFingerprint::from_local_file(&path).unwrap();
+        assert_ne!(first.platform_file_id(), replaced.platform_file_id());
+        assert_eq!(first.quick_content_hash(), replaced.quick_content_hash());
+        fs::remove_dir_all(directory).unwrap();
     }
 
     #[cfg(all(unix, not(target_os = "macos")))]

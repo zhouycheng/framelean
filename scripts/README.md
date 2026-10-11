@@ -23,6 +23,8 @@ Windows Rust runtime 必须在 MSYS2 MINGW64 shell 执行 `build_runtime_windows
 
 Windows CI 的 MSYS2 使用 `path-type: inherit`，保留前一步安装的 Rust 工具路径。本地运行时也需确保 `rustup`、`cargo`、`gcc`、`pkg-config`、`cygpath` 和 `objdump` 位于 shell 的 PATH；runtime 入口在构建静态 SDK 前检查这些工具并准备 Rust target。
 
+Windows CI 在 SDK 构建完成后独立保存缓存；以最后生成的 `ffmpeg-build-info.txt` 为完成标记，后续 Rust 编译或测试失败也能保留完整 SDK。
+
 ## 清理本地构建物
 
 macOS 或 MSYS2 Bash：
