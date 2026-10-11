@@ -36,6 +36,7 @@ jobs:
           update: true
           install: >-
             mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-gdb
             mingw-w64-x86_64-pkg-config
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-ninja
@@ -68,6 +69,15 @@ jobs:
         with:
           path: build/dependencies/ffmpeg/windows-x64
           key: ${{ steps.libav-cache.outputs.cache-primary-key }}
+
+      - name: Diagnose native audio test failure
+        if: failure()
+        shell: msys2 {0}
+        run: |
+          test_binary=$(find fll/target/x86_64-pc-windows-gnu/debug/deps -name 'media_frames_real-*.exe' -print -quit)
+          if [[ -n "$test_binary" ]]; then
+            gdb --batch -ex run -ex 'thread apply all bt' --args "$test_binary" real_libav_transcodes_pcm_audio_into_aac_m4a_without_cli --exact --nocapture
+          fi
 
       - name: Analyze, smoke-test, and package
         shell: pwsh
