@@ -70,13 +70,13 @@ jobs:
           path: build/dependencies/ffmpeg/windows-x64
           key: ${{ steps.libav-cache.outputs.cache-primary-key }}
 
-      - name: Diagnose native audio test failure
+      - name: Diagnose native media test failure
         if: failure()
         shell: msys2 {0}
         run: |
           test_binary=$(find fll/target/x86_64-pc-windows-gnu/debug/deps -name 'media_frames_real-*.exe' -print -quit)
           if [[ -n "$test_binary" ]]; then
-            gdb --batch -ex run -ex 'thread apply all bt' --args "$test_binary" real_libav_transcodes_pcm_audio_into_aac_m4a_without_cli --exact --nocapture
+            gdb --batch -ex run -ex 'thread apply all bt' --args "$test_binary" --nocapture
           fi
 
       - name: Analyze, smoke-test, and package

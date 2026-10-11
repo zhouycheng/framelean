@@ -417,12 +417,26 @@ fn convert_to_rgb24(
         .and_then(|width| width.checked_mul(usize::try_from(target_height).ok()?))
         .and_then(|pixels| pixels.checked_mul(3))
         .ok_or_else(|| EngineError::invalid_argument("decoded frame dimensions are too large"))?;
-    let mut rgb24 = vec![0_u8; byte_len];
-    let mut destination_data = [ptr::null_mut(); 4];
-    destination_data[0] = rgb24.as_mut_ptr();
-    let mut destination_linesize = [0_i32; 4];
-    destination_linesize[0] = i32::try_from(target_width.saturating_mul(3))
-        .map_err(|_| EngineError::invalid_argument("decoded frame row is too wide"))?;
+    let buffer_size = i32::try_from(byte_len)
+        .map_err(|_| EngineError::invalid_argument("decoded frame dimensions are too large"))?;
+    let converted = Frame::new()?;
+    // SAFETY: the owned frame is initialized before allocating SIMD-safe rows and padding.
+    unsafe {
+        (*converted.0).width = target_width as i32;
+        (*converted.0).height = target_height as i32;
+        (*converted.0).format = ffi::AV_PIX_FMT_RGB24;
+    }
+    // SAFETY: dimensions and pixel format are initialized on the owned frame.
+    let allocation_result = unsafe { ffi::av_frame_get_buffer(converted.0, 32) };
+    if allocation_result < 0 {
+        return Err(media_native_error(
+            EngineErrorCode::MediaInfoReadFailed,
+            "failed to allocate the converted video frame",
+            allocation_result,
+        ));
+    }
+    // SAFETY: destination owns a live frame and its initialized buffers.
+    let destination = unsafe { &*converted.0 };
     // SAFETY: dimensions and pixel formats are valid; filters and parameters are optional.
     let scaler = unsafe {
         ffi::sws_getContext(
@@ -446,7 +460,7 @@ fn convert_to_rgb24(
         ));
     }
     let scaler = ScaleContext(scaler);
-    // SAFETY: source frame data is initialized by the decoder and destination points to rgb24.
+    // SAFETY: decoder and libav-allocated destination planes include SIMD padding.
     let scaled_height = unsafe {
         ffi::sws_scale(
             scaler.0,
@@ -454,8 +468,8 @@ fn convert_to_rgb24(
             frame.linesize.as_ptr(),
             0,
             frame.height,
-            destination_data.as_ptr(),
-            destination_linesize.as_ptr(),
+            destination.data.as_ptr(),
+            destination.linesize.as_ptr(),
         )
     };
     if scaled_height != target_height as i32 {
@@ -463,6 +477,27 @@ fn convert_to_rgb24(
             ErrorKind::Media,
             EngineErrorCode::MediaInfoReadFailed,
             "pixel conversion returned an incomplete video frame",
+        ));
+    }
+    let mut rgb24 = vec![0_u8; byte_len];
+    // SAFETY: destination is a padded RGB24 frame; rgb24 holds the tightly packed image.
+    let copied = unsafe {
+        ffi::av_image_copy_to_buffer(
+            rgb24.as_mut_ptr(),
+            buffer_size,
+            destination.data.as_ptr() as *const *const u8,
+            destination.linesize.as_ptr(),
+            ffi::AV_PIX_FMT_RGB24,
+            destination.width,
+            destination.height,
+            1,
+        )
+    };
+    if copied != buffer_size {
+        return Err(media_native_error(
+            EngineErrorCode::MediaInfoReadFailed,
+            "failed to copy converted video pixels",
+            copied,
         ));
     }
     Ok(DecodedVideoFrame {
