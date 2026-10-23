@@ -1,7 +1,0 @@
-FrameLean is distributed under the GNU General Public License, version 3
-or any later version published by the Free Software Foundation.
-
-The full GPLv3 license text is kept in the repository root LICENSE file so
-repository hosts and package consumers can detect the project license. Binary
-release packages include the root LICENSE file, legal/NOTICE.md, and this legal
-directory.

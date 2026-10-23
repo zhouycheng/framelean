@@ -1,4 +1,0 @@
-interface:
-  display_name: "FrameLean Workflow"
-  short_description: "Route FrameLean project workflow requests"
-  default_prompt: "Use $framelean-workflow to choose the right FrameLean project skill for this request."

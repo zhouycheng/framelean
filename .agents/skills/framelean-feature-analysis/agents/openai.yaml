@@ -1,4 +1,0 @@
-interface:
-  display_name: "FrameLean Feature Analysis"
-  short_description: "Analyze FrameLean features and boundaries"
-  default_prompt: "Use $framelean-feature-analysis to analyze this FrameLean feature before planning."

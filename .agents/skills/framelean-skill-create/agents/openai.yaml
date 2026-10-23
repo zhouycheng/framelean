@@ -1,4 +1,0 @@
-interface:
-  display_name: "FrameLean Skill Create"
-  short_description: "Create or refactor FrameLean project skills"
-  default_prompt: "Use $framelean-skill-create to create or refactor a FrameLean project-level skill."
