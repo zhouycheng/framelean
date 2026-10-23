@@ -1,4 +1,0 @@
-interface:
-  display_name: "FrameLean Validation"
-  short_description: "Plan, review, and run FrameLean checks"
-  default_prompt: "Use $framelean-validation to review the changes and run the relevant checks."

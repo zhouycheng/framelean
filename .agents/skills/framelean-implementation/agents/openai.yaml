@@ -1,4 +1,0 @@
-interface:
-  display_name: "FrameLean Implementation"
-  short_description: "Implement confirmed FrameLean changes"
-  default_prompt: "Use $framelean-implementation to implement the confirmed FrameLean plan."

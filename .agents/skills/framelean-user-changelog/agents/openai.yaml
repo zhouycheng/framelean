@@ -1,4 +1,0 @@
-interface:
-  display_name: "FrameLean User Changelog"
-  short_description: "Save friendly FrameLean version notes to Downloads"
-  default_prompt: "Use $framelean-user-changelog to write a friendly changelog for the current FrameLean version and save it to Downloads."

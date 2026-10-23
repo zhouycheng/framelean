@@ -1,4 +1,0 @@
-interface:
-  display_name: "FrameLean Delivery"
-  short_description: "Calibrate docs and draft concise delivery copy"
-  default_prompt: "Use $framelean-delivery to update current facts and prepare commit copy plus a concise reviewer-facing PR description."
