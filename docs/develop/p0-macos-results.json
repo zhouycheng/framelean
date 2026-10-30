@@ -1,0 +1,24 @@
+{
+  "checks": [
+    "packaged FLL probe and ABI",
+    "unauthenticated request rejected",
+    "SSE delivers first snapshot without buffering",
+    "analyze real media with Unicode path",
+    "transcode decodes and source preserved",
+    "frame timestamps and AAC packet hashes preserve A/V timing",
+    "output collision never overwrites",
+    "video without audio",
+    "corrupt input rejected",
+    "cooperative cancel and partial cleanup",
+    "unresponsive Host force-canceled within 5 seconds",
+    "Host crash isolated and next analysis succeeds",
+    "changed source rejected",
+    "client reconnect preserves task",
+    "single Worker instance",
+    "unsupported codec rejected",
+    "explicit shutdown cancels active task"
+  ],
+  "sample_sha256": "643c804eee71360f210775b95aaee7d3d0cce613e9249ba0beba7918c9847bb9",
+  "sample_name": "bbb-30s.mp4",
+  "platform": "Darwin"
+}
