@@ -1,0 +1,10 @@
+CREATE TABLE media_source(id TEXT PRIMARY KEY, canonical_path TEXT NOT NULL, created_at INTEGER NOT NULL);
+CREATE TABLE analysis(id TEXT PRIMARY KEY, source_id TEXT NOT NULL REFERENCES media_source(id), source_fingerprint TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('queued','running','succeeded','failed','canceled','interrupted')), media_json TEXT, error_json TEXT, queue_order INTEGER NOT NULL, created_at INTEGER NOT NULL);
+CREATE TABLE processing_task(id TEXT PRIMARY KEY, analysis_id TEXT NOT NULL REFERENCES analysis(id), preset_json TEXT NOT NULL, output_directory TEXT NOT NULL, created_at INTEGER NOT NULL);
+CREATE TABLE execution_attempt(id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES processing_task(id), attempt_number INTEGER NOT NULL, queue_order INTEGER NOT NULL, status TEXT NOT NULL CHECK(status IN ('queued','running','validating','publishing','succeeded','failed','canceled','interrupted')), temp_path TEXT, error_json TEXT, started_at INTEGER, finished_at INTEGER, UNIQUE(task_id,attempt_number));
+CREATE UNIQUE INDEX one_active_attempt ON execution_attempt(task_id) WHERE status IN ('queued','running','validating','publishing');
+CREATE TABLE output_artifact(id TEXT PRIMARY KEY, attempt_id TEXT NOT NULL UNIQUE REFERENCES execution_attempt(id), final_path TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('publishing','succeeded','failed')), size_bytes INTEGER NOT NULL, sha256 TEXT NOT NULL);
+CREATE TABLE request_receipts(request_id TEXT PRIMARY KEY, request_json TEXT NOT NULL, response_json TEXT NOT NULL);
+CREATE TABLE worker_state(id INTEGER PRIMARY KEY CHECK(id=1), paused INTEGER NOT NULL CHECK(paused IN(0,1)), revision INTEGER NOT NULL, next_order INTEGER NOT NULL);
+INSERT INTO worker_state VALUES(1,0,0,0);
+PRAGMA user_version=1;

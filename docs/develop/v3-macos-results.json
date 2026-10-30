@@ -1,0 +1,74 @@
+{
+  "suite": "v3-integration",
+  "platform": "Darwin",
+  "checks": [
+    "mixed media facts, unsupported choices hidden, batch intersection, request deduplication",
+    "JSON version and fields, immutable execution plan, source hardlink protection, atomic batch rejection",
+    "real decode, AAC packet/timestamp equality, silent input, Unicode paths, collision and retry history",
+    "Host crash isolation, active cancellation bound, CLI observation exit and reconnect",
+    "running Worker interruption, source change and output write failure",
+    "probeable late corruption fails execution without publishing damaged result",
+    "actual abort/restart at validation, intent, link, success commit and persisted cancel intent",
+    "cancel during publication converges to successful published result",
+    "unavailable output directory remains reconciling and explicit reconciliation succeeds",
+    "identical unrelated file is preserved rather than mistaken for published hardlink",
+    "cleanup identity failure preserves file and successful result",
+    "10000 attempt history bounded pagination and slow event subscription responsiveness",
+    "512 MiB publication hash recovery keeps snapshot responsive",
+    "missing FLL is diagnosable without terminating gateway",
+    "FLL ABI and JSON negotiation diagnose old components"
+  ],
+  "passed": 15,
+  "windows": "not tested",
+  "native_flutter": {
+    "same_worker": true,
+    "same_session": true,
+    "active_after_window_closed": true,
+    "progress_after_close": 0.20857858600079243,
+    "native_reopen_progress_observed": 52,
+    "final_status": "succeeded",
+    "cleanup": "done",
+    "formal_exit_endpoint_removed": true,
+    "independent_decode": true,
+    "unsupported_rotation_option_hidden": true,
+    "video_frame_count": 2880,
+    "max_pts_difference_seconds": 0.0,
+    "frame_duration_fix_revalidated": true,
+    "final_output_bytes": 28217668
+  },
+  "independent_package": {
+    "independent_copy": true,
+    "minimal_system_path": true,
+    "no_component_overrides": true,
+    "compression_succeeded": true,
+    "missing_bundled_dependency_diagnosed": true
+  },
+  "native_media": {
+    "source": {
+      "sha256": "3ad31116c3472542fea9de21ae49a1cda731f688d1c3d0b123eda70acb1fd8d9",
+      "size": 91648721
+    },
+    "output": {
+      "sha256": "09930e69d4e5ec7c5bd0f2d19a48781f7134ceea1ff141ee92d37234cce14ce9",
+      "size": 28217668
+    },
+    "preparation": "Big Buck Bunny bbb-30s.mp4; ffmpeg -stream_loop 3 -i INPUT -vf scale=1280:720 -c:v libx264 -preset ultrafast -crf 18 -c:a copy OUTPUT"
+  },
+  "rust_tests": {
+    "contracts": 2,
+    "worker": 5,
+    "cli": 1
+  },
+  "flutter_tests": 2,
+  "components": {
+    "http": 3,
+    "fll_abi": 1,
+    "fll_json": 2,
+    "database": 2
+  },
+  "artifact_sha256": {
+    "framelean": "f86fa1c0837aca219a4daf9b01493ce87ec3bea6fa14f51c32bbe40cf3bde2c9",
+    "framelean-engine": "3e16a60c10b8a399d345bd464b52501488451836f9a3c4dcec6c92bfa9ce0090",
+    "libframelean_fll.dylib": "d71eda50b2edebc426ed70f0e331526affac37a2bd890fedd43fdc2b8f6746a2"
+  }
+}

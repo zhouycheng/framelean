@@ -26,63 +26,117 @@ class FrameLeanApp extends StatelessWidget {
 class ProcessingPage extends StatefulWidget {
   const ProcessingPage({super.key});
   @override
-  State<ProcessingPage> createState() => _ProcessingPageState();
+  State<ProcessingPage> createState() => _Page();
 }
 
-class _ProcessingPageState extends State<ProcessingPage> {
-  late final ProcessingModel model = ProcessingModel(EngineGateway())..start();
-  static const lifecycle = MethodChannel('framelean/lifecycle');
+class _Page extends State<ProcessingPage> {
+  final model = ProcessingModel(EngineGateway());
+  final selected = <String>{};
+  static const channel = MethodChannel('framelean/lifecycle');
+  static const labels = {
+    'queued': '等待处理',
+    'running': '处理中',
+    'validating': '校验输出',
+    'publishing': '正在完成',
+    'reconciling': '等待核对结果',
+    'succeeded': '已完成',
+    'failed': '失败',
+    'canceled': '已取消',
+    'interrupted': '已中断',
+  };
   @override
   void initState() {
     super.initState();
-    lifecycle.setMethodCallHandler((call) async {
-      if (call.method == 'requestExit') await quit();
+    model.start();
+    channel.setMethodCallHandler((c) async {
+      if (c.method == 'requestExit') await quit();
       return false;
     });
   }
 
   @override
   void dispose() {
-    lifecycle.setMethodCallHandler(null);
+    channel.setMethodCallHandler(null);
     model.dispose();
     super.dispose();
   }
 
-  Future<void> chooseInput() async {
-    final file = await openFile(
-      acceptedTypeGroups: [
-        const XTypeGroup(label: '视频', extensions: ['mp4', 'mov']),
-      ],
-    );
-    if (file != null) await model.analyze(file.path);
-  }
-
   Future<void> quit() async {
-    final accepted = await showDialog<bool>(
+    final yes = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (c) => AlertDialog(
         title: const Text('退出 FrameLean'),
-        content: Text(model.busy ? '退出会取消当前任务并停止后台。关闭窗口则继续处理。' : '退出会停止后台服务。'),
+        content: const Text('停止当前处理并暂停队列。等待任务会保留，下次启动后可继续。'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(c, false),
             child: const Text('返回'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(c, true),
             child: const Text('退出软件'),
           ),
         ],
       ),
     );
-    if (accepted != true) return;
+    if (yes != true) return;
     try {
       await model.shutdown();
-      if (mounted) exit(0);
+      exit(0);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('退出失败：$e')));
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
+  String mediaDescription(dynamic m) {
+    if (m is! Map) return '';
+    final tracks = (m['tracks'] as List? ?? []).cast<Map>();
+    final videos = tracks.where((t) => t['kind'] == 'video').toList();
+    final audio = tracks.where((t) => t['kind'] == 'audio').toList();
+    final v = videos.isEmpty ? null : videos.first['video'];
+    final duration = m['duration_us']?['value'] as num?;
+    return '${v?['width']?['value'] ?? '?'} × ${v?['height']?['value'] ?? '?'} · ${duration == null ? '时长未知' : '${(duration / 1000000).toStringAsFixed(2)} 秒'} · ${videos.isEmpty ? '无视频轨' : videos.first['codec']?['value'] ?? '编码未知'} · ${audio.isEmpty ? '无音轨' : '${audio.length} 条音轨'}';
+  }
+
+  Future<void> history(String id) async {
+    try {
+      final detail = await model.gateway.call('tasks/$id');
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: Text('执行历史 · 共 ${detail['attempt_count']} 次'),
+          content: SizedBox(
+            width: 600,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final e in detail['attempts'] as List)
+                    SelectableText(
+                      '第 ${e['attempt_number']} 次 · ${labels[e['status']] ?? e['status']}\n${e['error_json']?['message'] ?? ''}',
+                    ),
+                  if (detail['next_cursor'] != null)
+                    const Text('此处显示最近 50 次；完整历史可通过 CLI 分页查询。'),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(c),
+              child: const Text('关闭'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -91,207 +145,239 @@ class _ProcessingPageState extends State<ProcessingPage> {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: model,
     builder: (context, _) {
-      const labels = {
-        'idle': '等待选择视频',
-        'running': '处理中',
-        'validating': '校验输出',
-        'succeeded': '已完成',
-        'failed': '处理失败',
-        'canceled': '已取消',
-      };
-      final media = model.media;
-      final output = model.task?['output'] as String?;
+      final ready = model
+          .rows('analyses')
+          .where(
+            (a) =>
+                a['status'] == 'succeeded' &&
+                model.canProcess(a['id'] as String),
+          )
+          .map((a) => a['id'] as String)
+          .toSet();
+      selected.removeWhere((id) => !ready.contains(id));
       return Scaffold(
-        backgroundColor: const Color(0xfff3f6f9),
-        body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
-              child: ListView(
-                padding: const EdgeInsets.all(32),
-                children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'FrameLean',
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: model.connected ? quit : null,
-                        child: const Text('退出软件'),
-                      ),
-                    ],
-                  ),
-                  const Text(
-                    '技术贯通 · 本地视频压缩',
-                    style: TextStyle(color: Colors.blueGrey),
-                  ),
-                  const SizedBox(height: 24),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Expanded(
-                                child: Text(
-                                  '1  选择视频',
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                              ),
-                              FilledButton.tonal(
-                                onPressed: model.busy || !model.connected
-                                    ? null
-                                    : chooseInput,
-                                child: const Text('选择视频'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          SelectableText(
-                            model.input.isEmpty
-                                ? '支持 MP4/MOV · H.264 8-bit SDR · 无音轨或单 AAC 音轨'
-                                : model.input,
-                          ),
-                          if (media != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 16),
-                              child: Text(
-                                '${media['video']['width']} × ${media['video']['height']}  ·  ${(media['duration_us'] / 1000000).toStringAsFixed(2)} 秒  ·  H.264\n音轨：${media['audio'] == null ? '无' : 'AAC / ${media['audio']['sample_rate']} Hz / ${media['audio']['channels']} 声道'}',
-                              ),
-                            ),
-                          const Divider(height: 32),
-                          const Text(
-                            '2  固定压缩预设',
-                            style: TextStyle(fontSize: 20),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'H.264 · CRF 23 · medium · 保持尺寸与时间戳\nAAC 音轨直接复制，输出 MP4。实际文件大小取决于源素材。',
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: SelectableText(
-                                  model.outputDirectory.isEmpty
-                                      ? '输出目录：默认与源文件同目录'
-                                      : '输出目录：${model.outputDirectory}',
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: model.busy
-                                    ? null
-                                    : () async {
-                                        final path = await getDirectoryPath();
-                                        if (path != null) model.setOutput(path);
-                                      },
-                                child: const Text('选择目录'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              FilledButton(
-                                onPressed:
-                                    model.busy ||
-                                        !model.connected ||
-                                        model.analysisId == null
-                                    ? null
-                                    : model.execute,
-                                child: const Text('开始压缩'),
-                              ),
-                              const SizedBox(width: 12),
-                              OutlinedButton(
-                                onPressed: model.busy && model.connected
-                                    ? model.cancel
-                                    : null,
-                                child: const Text('取消'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            model.connected
-                                ? '${labels[model.state] ?? model.state} · ${model.task?['kind'] == 'analyze' ? '媒体分析' : '视频压缩'}'
-                                : '正在连接后台…',
-                            style: const TextStyle(fontSize: 18),
-                          ),
-                          if (model.busy)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              child: LinearProgressIndicator(
-                                value: model.task?['kind'] == 'analyze'
-                                    ? null
-                                    : model.progress,
-                              ),
-                            ),
-                          if (model.error != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 12),
-                              child: SelectableText(
-                                model.error!,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                              ),
-                            ),
-                          if (output != null) ...[
-                            const SizedBox(height: 12),
-                            SelectableText('输出：$output'),
-                            Text(
-                              '输出 ${(model.task!['output_bytes'] / 1048576).toStringAsFixed(2)} MB；源文件 ${(model.task!['fingerprint']['size'] / 1048576).toStringAsFixed(2)} MB',
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                if (Platform.isMacOS) {
-                                  await Process.run('/usr/bin/open', [
-                                    '-R',
-                                    output,
-                                  ]);
-                                } else {
-                                  await Process.run('explorer.exe', [
-                                    '/select,',
-                                    output,
-                                  ]);
-                                }
-                              },
-                              child: const Text('打开结果位置'),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 16),
-                    child: Text(
-                      '原文件始终保留。关闭窗口后后台继续处理，重新打开可恢复进度。\n当前阶段一次处理一个视频；后台重启后需重新分析。',
-                      style: TextStyle(color: Colors.blueGrey),
-                    ),
-                  ),
-                ],
-              ),
+        appBar: AppBar(
+          title: const Text('FrameLean · 批量压缩'),
+          actions: [TextButton(onPressed: quit, child: const Text('退出软件'))],
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            Text(
+              model.connected
+                  ? '后台已连接 · ${model.paused ? '队列已暂停' : '队列运行中'}'
+                  : '正在连接后台',
             ),
-          ),
+            const Text('先分析媒体，再选择可用的压缩方案。关闭窗口后后台继续；重启后可恢复等待队列。'),
+            if (model.error != null)
+              SelectableText(
+                model.error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            Wrap(
+              spacing: 12,
+              children: [
+                FilledButton(
+                  onPressed: !model.connected || model.submitting
+                      ? null
+                      : () async {
+                          final files = await openFiles();
+                          await model.analyze(
+                            files.map((f) => f.path).toList(),
+                          );
+                        },
+                  child: const Text('添加视频'),
+                ),
+                OutlinedButton(
+                  onPressed: !model.connected || model.submitting
+                      ? null
+                      : () => model.command(
+                          model.paused ? 'queue/resume' : 'queue/pause',
+                          {},
+                        ),
+                  child: Text(model.paused ? '继续队列' : '暂停队列'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final p = await getDirectoryPath();
+                    if (p != null) model.setOutput(p);
+                  },
+                  child: const Text('选择输出目录'),
+                ),
+              ],
+            ),
+            SelectableText(
+              '输出目录：${model.outputDirectory.isEmpty ? '选择文件后默认为同目录' : model.outputDirectory}',
+            ),
+            const SizedBox(height: 16),
+            Text('分析列表', style: Theme.of(context).textTheme.titleLarge),
+            for (final a in model.rows('analyses'))
+              if (a['status'] == 'succeeded' &&
+                  !model.canProcess(a['id'] as String))
+                ListTile(
+                  title: Text('${a['input']}'),
+                  subtitle: Text(
+                    '${mediaDescription(a['media_json'])}\n${model.unavailableReason(a['id'] as String)}',
+                  ),
+                )
+              else
+                CheckboxListTile(
+                  value: selected.contains(a['id']),
+                  onChanged: a['status'] != 'succeeded'
+                      ? null
+                      : (v) => setState(() {
+                          if (v == true) {
+                            selected.add(a['id'] as String);
+                          } else {
+                            selected.remove(a['id']);
+                          }
+                        }),
+                  title: Text('${a['input']}'),
+                  subtitle: Text(
+                    '${labels[a['status']] ?? a['status']}\n${mediaDescription(a['media_json'])} ${a['error_json']?['message'] ?? ''}',
+                  ),
+                  secondary:
+                      a['status'] == 'interrupted' || a['status'] == 'failed'
+                      ? IconButton(
+                          tooltip: '重新分析',
+                          onPressed: () =>
+                              model.analyze([a['input'] as String]),
+                          icon: const Icon(Icons.refresh),
+                        )
+                      : null,
+                ),
+            if (model.analysisCursor != null)
+              TextButton(
+                onPressed: () => model.loadMore('analyses'),
+                child: const Text('更多媒体'),
+              ),
+            if (selected.isNotEmpty)
+              FilledButton(
+                onPressed: selected.isEmpty || model.submitting
+                    ? null
+                    : () async {
+                        await model.enqueue(selected.toList());
+                        if (model.error == null && mounted) {
+                          setState(selected.clear);
+                        }
+                      },
+                child: Text('将选中 ${selected.length} 项加入压缩队列'),
+              ),
+            const SizedBox(height: 24),
+            Text('任务与执行历史', style: Theme.of(context).textTheme.titleLarge),
+            for (final t in model.rows('tasks')) ...[
+              Text(
+                '${t['input']}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              for (final e
+                  in model
+                      .rows('attempts')
+                      .where((e) => e['task_id'] == t['id']))
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '第 ${e['attempt_number']} 次 · ${e['cancel_requested_at'] != null && ['running', 'validating'].contains(e['status']) ? '取消中' : labels[e['status']] ?? e['status']}',
+                        ),
+                        if (model.snapshot['active']?['id'] == e['id'])
+                          LinearProgressIndicator(
+                            value:
+                                (model.snapshot['active']?['event']?['progress']
+                                        as num?)
+                                    ?.toDouble(),
+                          ),
+                        if (e['error_json'] != null)
+                          Text('${e['error_json']?['message'] ?? ''}'),
+                        if ([
+                              'queued',
+                              'running',
+                              'validating',
+                            ].contains(e['status']) &&
+                            e['cancel_requested_at'] == null)
+                          TextButton(
+                            onPressed: () => model.command('cancel', {
+                              'attempt_id': e['id'],
+                            }),
+                            child: const Text('取消'),
+                          ),
+                        if (e['status'] == 'reconciling')
+                          TextButton(
+                            onPressed: () => model.command('reconcile', {
+                              'attempt_id': e['id'],
+                            }),
+                            child: const Text('重新核对结果'),
+                          ),
+                        for (final o
+                            in model
+                                .rows('outputs')
+                                .where((o) => o['attempt_id'] == e['id']))
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SelectableText(
+                                '${o['status'] == 'succeeded' ? '结果' : '发布记录'}：${o['final_path']}\n输出 ${o['size_bytes']} 字节；源文件 ${t['source_fingerprint']?['size']} 字节',
+                              ),
+                              if (o['status'] == 'succeeded')
+                                TextButton(
+                                  onPressed: () async {
+                                    try {
+                                      final path = o['final_path'] as String;
+                                      final result = await Process.run(
+                                        Platform.isMacOS
+                                            ? 'open'
+                                            : 'explorer.exe',
+                                        Platform.isMacOS
+                                            ? ['-R', path]
+                                            : ['/select,', path],
+                                      );
+                                      if (result.exitCode != 0) {
+                                        throw StateError('无法打开结果位置');
+                                      }
+                                    } catch (error) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                              SnackBar(content: Text('$error')),
+                                            );
+                                      }
+                                    }
+                                  },
+                                  child: const Text('打开结果位置'),
+                                ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              TextButton(
+                onPressed: () => history(t['id'] as String),
+                child: const Text('查看执行历史'),
+              ),
+              if (model
+                      .rows('attempts')
+                      .where((e) => e['task_id'] == t['id'])
+                      .isNotEmpty &&
+                  ['failed', 'canceled', 'interrupted'].contains(
+                    model
+                        .rows('attempts')
+                        .lastWhere((e) => e['task_id'] == t['id'])['status'],
+                  ))
+                TextButton(
+                  onPressed: () => model.command('retry', {'task_id': t['id']}),
+                  child: const Text('重试任务'),
+                ),
+            ],
+            if (model.taskCursor != null)
+              TextButton(
+                onPressed: () => model.loadMore('tasks'),
+                child: const Text('更多任务'),
+              ),
+          ],
         ),
       );
     },

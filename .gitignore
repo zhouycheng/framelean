@@ -57,6 +57,7 @@ app.*.map.json
 # Rust project outputs
 /fengine/target/
 /fll/target/
+/crates/*/target/
 
 # Local agent runtime data. Shared agent instructions under .agents/skills/
 # are committed, but local caches and logs are not.

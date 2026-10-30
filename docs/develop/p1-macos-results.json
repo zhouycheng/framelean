@@ -1,0 +1,16 @@
+{
+  "checks": [
+    "durable idempotency and request conflict",
+    "mixed analysis batch continues after failure",
+    "queued cancel retry history and restart pause",
+    "real compression Unicode output collision and decode",
+    "running crash becomes interrupted",
+    "publication commit gap hash reconciliation",
+    "missing or conflicting publication never overwrites files",
+    "Host crash isolated and subsequent running cancellation succeeds",
+    "changed source refused before execution",
+    "output creation failure recorded without publication",
+    "unsupported codec does not block next supported input"
+  ],
+  "platform": "posix"
+}

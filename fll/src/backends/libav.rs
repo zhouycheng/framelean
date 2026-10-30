@@ -1,12 +1,11 @@
 use crate::Operation;
+use fll_contracts::{ExecutionPlan, MediaFacts, ResourceGrant};
 use rusty_ffmpeg::ffi as av;
-use serde_json::{Value, json};
 use std::{
     ffi::{CStr, CString},
-    path::Path,
     ptr,
 };
-type Result<T> = std::result::Result<T, String>;
+pub(crate) type Result<T> = std::result::Result<T, String>;
 fn cs(s: &str) -> Result<CString> {
     CString::new(s).map_err(|_| "路径包含 NUL 字符".into())
 }
@@ -20,13 +19,44 @@ fn check(n: i32) -> Result<()> {
         .to_string_lossy()
         .into_owned())
 }
-struct Input(*mut av::AVFormatContext);
+pub(crate) struct Input(pub(crate) *mut av::AVFormatContext);
 impl Input {
-    fn open(path: &str) -> Result<Self> {
-        let mut p = ptr::null_mut();
-        check(unsafe {
-            av::avformat_open_input(&mut p, cs(path)?.as_ptr(), ptr::null(), ptr::null_mut())
-        })?;
+    pub(crate) fn open(path: &str, op: &Operation) -> Result<Self> {
+        let path = cs(path)?;
+        let mut p = unsafe { av::avformat_alloc_context() };
+        if p.is_null() {
+            return Err("format allocation failed".into());
+        }
+        unsafe {
+            (*p).interrupt_callback = av::AVIOInterruptCB {
+                callback: Some(interrupt),
+                opaque: (&op.cancel as *const std::sync::atomic::AtomicBool)
+                    .cast_mut()
+                    .cast(),
+            };
+        }
+        let mut options = ptr::null_mut();
+        unsafe {
+            av::av_dict_set(
+                &mut options,
+                c"protocol_whitelist".as_ptr(),
+                c"file".as_ptr(),
+                0,
+            );
+        }
+        let opened =
+            unsafe { av::avformat_open_input(&mut p, path.as_ptr(), ptr::null(), &mut options) };
+        unsafe {
+            av::av_dict_free(&mut options);
+        }
+        if opened < 0 {
+            if !p.is_null() {
+                unsafe {
+                    av::avformat_close_input(&mut p);
+                }
+            }
+            check(opened)?;
+        }
         let i = Self(p);
         check(unsafe { av::avformat_find_stream_info(p, ptr::null_mut()) })?;
         Ok(i)
@@ -95,127 +125,63 @@ fn codec(c: *const av::AVCodec) -> Result<Codec> {
         Ok(Codec(p))
     }
 }
-fn streams(i: &Input) -> &[*mut av::AVStream] {
+pub(crate) fn compression_ready() -> bool {
+    unsafe {
+        let c = av::avcodec_find_encoder_by_name(c"libx264".as_ptr());
+        let Ok(context) = codec(c) else {
+            return false;
+        };
+        (*context.0).width = 16;
+        (*context.0).height = 16;
+        (*context.0).pix_fmt = av::AV_PIX_FMT_YUV420P;
+        (*context.0).time_base = av::AVRational { num: 1, den: 24 };
+        (*context.0).thread_count = 1;
+        av::avcodec_open2(context.0, c, ptr::null_mut()) >= 0
+    }
+}
+pub(crate) fn streams(i: &Input) -> &[*mut av::AVStream] {
     unsafe { std::slice::from_raw_parts((*i.0).streams, (*i.0).nb_streams as usize) }
 }
-pub fn versions() -> Value {
-    unsafe {
-        json!({"avcodec":av::avcodec_version(),"avformat":av::avformat_version(),"avutil":av::avutil_version(),"encoder":!av::avcodec_find_encoder_by_name(c"libx264".as_ptr()).is_null()})
-    }
+unsafe extern "C" fn interrupt(opaque: *mut std::ffi::c_void) -> i32 {
+    let cancel = unsafe { &*opaque.cast::<std::sync::atomic::AtomicBool>() };
+    i32::from(cancel.load(std::sync::atomic::Ordering::Relaxed))
 }
-fn inspect(i: &Input) -> Result<Value> {
+pub(crate) fn transcode(
+    input: &Input,
+    media: &MediaFacts,
+    plan: &ExecutionPlan,
+    grant: &ResourceGrant,
+    path: &str,
+    op: &Operation,
+) -> Result<()> {
     unsafe {
-        let format = CStr::from_ptr((*(*i.0).iformat).name).to_string_lossy();
-        if !format.split(',').any(|x| x == "mov" || x == "mp4") {
-            return Err("P0 仅支持 MP4/MOV 容器".into());
-        }
-        let mut video = None;
-        let mut audio = None;
-        for (idx, &s) in streams(i).iter().enumerate() {
-            let p = &*(*s).codecpar;
-            match p.codec_type {
-                av::AVMEDIA_TYPE_VIDEO => {
-                    if video.is_some()
-                        || p.codec_id != av::AV_CODEC_ID_H264
-                        || p.format != av::AV_PIX_FMT_YUV420P
-                        || p.width <= 0
-                        || p.height <= 0
-                        || p.width % 2 != 0
-                        || p.height % 2 != 0
-                    {
-                        return Err("P0 仅支持单轨 H.264 8-bit yuv420p 偶数尺寸视频".into());
-                    }
-                    if p.color_trc == av::AVCOL_TRC_SMPTE2084
-                        || p.color_trc == av::AVCOL_TRC_ARIB_STD_B67
-                        || p.color_primaries == av::AVCOL_PRI_BT2020
-                    {
-                        return Err("P0 暂不支持 HDR/BT.2020".into());
-                    }
-                    if !av::av_packet_side_data_get(
-                        p.coded_side_data,
-                        p.nb_coded_side_data,
-                        av::AV_PKT_DATA_DISPLAYMATRIX,
-                    )
-                    .is_null()
-                        || !av::av_dict_get((*s).metadata, c"rotate".as_ptr(), ptr::null(), 0)
-                            .is_null()
-                    {
-                        return Err("P0 暂不支持带旋转/显示矩阵的素材".into());
-                    }
-                    if p.sample_aspect_ratio.num > 0
-                        && p.sample_aspect_ratio.num != p.sample_aspect_ratio.den
-                    {
-                        return Err("P0 暂不支持非方形像素".into());
-                    }
-                    video = Some(
-                        json!({"index":idx,"codec":"h264","width":p.width,"height":p.height,"pixel_format":"yuv420p"}),
-                    );
-                }
-                av::AVMEDIA_TYPE_AUDIO => {
-                    if audio.is_some() || p.codec_id != av::AV_CODEC_ID_AAC {
-                        return Err("P0 仅支持无音轨或单 AAC 音轨".into());
-                    }
-                    audio = Some(
-                        json!({"index":idx,"codec":"aac","sample_rate":p.sample_rate,"channels":p.ch_layout.nb_channels}),
-                    );
-                }
-                _ => return Err("P0 暂不支持字幕、附件或数据轨".into()),
-            }
-        }
-        let video = video.ok_or("未找到视频轨")?;
-        if (*i.0).duration <= 0 {
-            return Err("无法确定视频时长".into());
-        }
-        Ok(json!({"duration_us":(*i.0).duration,"video":video,"audio":audio,"container":"mp4/mov"}))
-    }
-}
-pub fn run(r: &Value, op: &Operation) -> Result<Value> {
-    let path = r["input"].as_str().ok_or("缺少输入路径")?;
-    if !Path::new(path).is_file() {
-        return Err("输入文件不存在".into());
-    }
-    let input = Input::open(path)?;
-    let info = inspect(&input)?;
-    op.check()?;
-    if r["kind"] == "analyze" {
-        return Ok(info);
-    }
-    if r["kind"] != "execute" {
-        return Err("未知操作".into());
-    }
-    let out = r["temp"].as_str().ok_or("缺少输出路径")?;
-    transcode(&input, &info, out, op)?;
-    op.check()?;
-    op.update(json!({"state":"validating","progress":0.99}));
-    let result = inspect(&Input::open(out)?)?;
-    let duration = info["duration_us"].as_i64().unwrap();
-    if (result["duration_us"].as_i64().unwrap() - duration).abs() > 250_000
-        || result["video"]["width"] != info["video"]["width"]
-        || result["video"]["height"] != info["video"]["height"]
-        || result["audio"].is_null() != info["audio"].is_null()
-    {
-        return Err("输出校验失败：时长、尺寸或轨道不一致".into());
-    }
-    op.check()?;
-    Ok(result)
-}
-fn transcode(input: &Input, info: &Value, path: &str, op: &Operation) -> Result<()> {
-    unsafe {
-        let vi = info["video"]["index"].as_u64().unwrap() as usize;
-        let audio_idx = info["audio"]["index"].as_u64().map(|x| x as usize);
+        let vi = plan
+            .stream_map
+            .iter()
+            .find(|m| m.mode == "transcode")
+            .ok_or("missing video mapping")?
+            .input as usize;
+        let audio_idx = plan
+            .stream_map
+            .iter()
+            .find(|m| m.mode == "copy")
+            .map(|m| m.input as usize);
         let vs = streams(input)[vi];
         let vp = &*(*vs).codecpar;
         let dc = av::avcodec_find_decoder(vp.codec_id);
         let decoder = codec(dc)?;
         check(av::avcodec_parameters_to_context(decoder.0, (*vs).codecpar))?;
         (*decoder.0).pkt_timebase = (*vs).time_base;
-        (*decoder.0).thread_count = 2;
+        (*decoder.0).thread_count = grant.threads as i32;
+        (*decoder.0).err_recognition =
+            (av::AV_EF_CRCCHECK | av::AV_EF_BITSTREAM | av::AV_EF_BUFFER | av::AV_EF_EXPLODE)
+                as i32;
         check(av::avcodec_open2(decoder.0, dc, ptr::null_mut()))?;
-        let ec = av::avcodec_find_encoder_by_name(c"libx264".as_ptr());
+        let ec = av::avcodec_find_encoder_by_name(cs(&plan.parameters.encoder)?.as_ptr());
         let encoder = codec(ec)?;
-        (*encoder.0).width = vp.width;
-        (*encoder.0).height = vp.height;
-        (*encoder.0).pix_fmt = av::AV_PIX_FMT_YUV420P;
+        (*encoder.0).width = plan.parameters.width;
+        (*encoder.0).height = plan.parameters.height;
+        (*encoder.0).pix_fmt = av::av_get_pix_fmt(cs(&plan.parameters.pixel_format)?.as_ptr());
         (*encoder.0).time_base = (*vs).time_base;
         (*encoder.0).framerate = av::av_guess_frame_rate(input.0, vs, ptr::null_mut());
         (*encoder.0).sample_aspect_ratio = av::AVRational { num: 1, den: 1 };
@@ -223,12 +189,14 @@ fn transcode(input: &Input, info: &Value, path: &str, op: &Operation) -> Result<
         (*encoder.0).color_trc = vp.color_trc;
         (*encoder.0).colorspace = vp.color_space;
         (*encoder.0).color_range = vp.color_range;
-        (*encoder.0).thread_count = 2;
+        (*encoder.0).thread_count = grant.threads as i32;
+        // MP4 needs the final frame's duration to retain it in the presentation timeline.
+        (*encoder.0).flags |= av::AV_CODEC_FLAG_FRAME_DURATION as i32;
         let mut out = ptr::null_mut();
         check(av::avformat_alloc_output_context2(
             &mut out,
             ptr::null(),
-            c"mp4".as_ptr(),
+            cs(&plan.parameters.container)?.as_ptr(),
             cs(path)?.as_ptr(),
         ))?;
         let output = Output(out);
@@ -238,13 +206,13 @@ fn transcode(input: &Input, info: &Value, path: &str, op: &Operation) -> Result<
         check(av::av_opt_set(
             (*encoder.0).priv_data,
             c"crf".as_ptr(),
-            c"23".as_ptr(),
+            cs(&plan.parameters.crf.to_string())?.as_ptr(),
             0,
         ))?;
         check(av::av_opt_set(
             (*encoder.0).priv_data,
             c"preset".as_ptr(),
-            c"medium".as_ptr(),
+            cs(&plan.parameters.preset)?.as_ptr(),
             0,
         ))?;
         check(av::avcodec_open2(encoder.0, ec, ptr::null_mut()))?;
@@ -297,21 +265,36 @@ fn transcode(input: &Input, info: &Value, path: &str, op: &Operation) -> Result<
         };
         let drain_decoder = || -> Result<()> {
             loop {
-                op.check()?;
+                op.check().map_err(|e| e.message)?;
                 let n = av::avcodec_receive_frame(decoder.0, frame.0);
                 if n == -35 || n == -11 || n == av::AVERROR_EOF {
                     break;
                 }
                 check(n)?;
+                if (*frame.0).decode_error_flags != 0
+                    || (*frame.0).flags & av::AV_FRAME_FLAG_CORRUPT as i32 != 0
+                {
+                    return Err("视频帧损坏".into());
+                }
                 if (*frame.0).format != av::AV_PIX_FMT_YUV420P
                     || (*frame.0).width != vp.width
                     || (*frame.0).height != vp.height
                 {
                     return Err("视频中途改变格式或尺寸".into());
                 }
+                if (*frame.0).color_primaries != vp.color_primaries
+                    || (*frame.0).color_trc != vp.color_trc
+                    || (*frame.0).colorspace != vp.color_space
+                    || (*frame.0).color_range != vp.color_range
+                {
+                    return Err("视频帧色彩信息与分析结果不一致".into());
+                }
                 (*frame.0).pts = (*frame.0).best_effort_timestamp;
                 if (*frame.0).pts == av::AV_NOPTS_VALUE {
                     return Err("视频帧缺少时间戳".into());
+                }
+                if (*frame.0).duration <= 0 {
+                    return Err("视频帧缺少有效时长，无法保证完整时间线".into());
                 }
                 (*frame.0).pict_type = av::AV_PICTURE_TYPE_NONE;
                 let t = av::av_rescale_q(
@@ -334,7 +317,15 @@ fn transcode(input: &Input, info: &Value, path: &str, op: &Operation) -> Result<
                         },
                     )
                 };
-                op.update(json!({"state":"running","progress":((t-start) as f64/info["duration_us"].as_f64().unwrap()).clamp(0.0,0.98)}));
+                op.progress(
+                    "running",
+                    Some(
+                        ((t - start) as f64
+                            / *media.duration_us.get().ok_or("duration unknown")? as f64)
+                            .clamp(0.0, 0.98),
+                    ),
+                    Some(t - start),
+                );
                 check(av::avcodec_send_frame(encoder.0, frame.0))?;
                 drain_encoder()?;
                 av::av_frame_unref(frame.0);
@@ -342,7 +333,7 @@ fn transcode(input: &Input, info: &Value, path: &str, op: &Operation) -> Result<
             Ok(())
         };
         loop {
-            op.check()?;
+            op.check().map_err(|e| e.message)?;
             let n = av::av_read_frame(input.0, pkt.0);
             if n == av::AVERROR_EOF {
                 break;

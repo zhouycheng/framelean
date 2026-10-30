@@ -20,15 +20,20 @@ class EngineGateway {
         _endpoint = jsonDecode(
           await File('$runtimeDirectory/endpoint.json').readAsString(),
         ) as Map<String, dynamic>;
+        if (_endpoint!['protocol_version'] != 3) {
+          throw const FormatException('Worker 协议不兼容，请先退出旧版本后台');
+        }
         final url = Uri.parse(_endpoint!['url'] as String);
         if (url.scheme != 'http' || url.host != '127.0.0.1') {
           throw const FormatException('Worker 地址无效');
         }
         final health = await call('health');
-        if (health['protocol_version'] != 1) {
+        if (health['protocol_version'] != 3) {
           throw const FormatException('Worker 协议不兼容');
         }
         return true;
+      } on FormatException {
+        rethrow;
       } catch (_) {
         _endpoint = null;
         return false;
@@ -47,7 +52,11 @@ class EngineGateway {
         binary,
       );
     }
-    await Process.start(binary, ['worker'], mode: ProcessStartMode.detached);
+    await Process.start(binary, [
+      'worker',
+      if (Platform.environment['FRAMELEAN_FLL'] != null)
+        Platform.environment['FRAMELEAN_FLL']!,
+    ], mode: ProcessStartMode.detached);
     for (var n = 0; n < 60 && !_closed; n++) {
       if (await discover()) return;
       await Future<void>.delayed(const Duration(milliseconds: 200));
@@ -63,7 +72,7 @@ class EngineGateway {
     if (endpoint == null) throw const SocketException('尚未连接 Worker');
     final request = await _http.openUrl(
       body == null ? 'GET' : 'POST',
-      Uri.parse('${endpoint['url']}/v1/$name'),
+      Uri.parse('${endpoint['url']}/v3/$name'),
     );
     request.headers.set(
       HttpHeaders.authorizationHeader,
@@ -74,15 +83,17 @@ class EngineGateway {
       request.write(
         jsonEncode({
           ...body,
-          'request_id': '${DateTime.now().microsecondsSinceEpoch}-$name',
+          'request_id':
+              body['request_id'] ??
+              '${DateTime.now().microsecondsSinceEpoch}-$name',
         }),
       );
     }
-    final response = await request.close().timeout(const Duration(seconds: 5));
+    final response = await request.close().timeout(const Duration(seconds: 60));
     final text = await utf8.decoder
         .bind(response)
         .join()
-        .timeout(const Duration(seconds: 5));
+        .timeout(const Duration(seconds: 60));
     final data = jsonDecode(text) as Map<String, dynamic>;
     if (response.statusCode >= 400) {
       throw StateError('${data['error']?['message'] ?? '请求失败'}');
@@ -94,16 +105,18 @@ class EngineGateway {
     while (!_closed) {
       try {
         await connect();
-        yield await call('snapshot');
+        final snapshot = await call('snapshot');
+        yield {'type': 'snapshot', 'data': snapshot};
         final request = await _http.getUrl(
-          Uri.parse('${_endpoint!['url']}/v1/events'),
+          Uri.parse('${_endpoint!['url']}/v3/events'),
         );
+        request.headers.set('Last-Event-ID', snapshot['event_id'] as String);
         request.headers.set(
           HttpHeaders.authorizationHeader,
           'Bearer ${_endpoint!['token']}',
         );
         final response = await request.close().timeout(
-          const Duration(seconds: 5),
+          const Duration(seconds: 60),
         );
         if (response.statusCode != 200) throw const SocketException('事件连接失败');
         await for (final line
