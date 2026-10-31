@@ -65,7 +65,12 @@ pub fn hash(path: &Path, cancel: &AtomicBool) -> Result<(u64, String, Value)> {
     ))
 }
 pub fn cleanup(id: &str, path: &Path, expected: &Value) -> Result<()> {
-    if path.file_name().and_then(|s| s.to_str()) != Some(&format!(".framelean-{id}.partial.mp4")) {
+    if path.file_stem().and_then(|s| s.to_str()) != Some(&format!(".framelean-{id}.partial"))
+        || path
+            .extension()
+            .and_then(|s| s.to_str())
+            .is_none_or(|ext| ext.is_empty() || !ext.bytes().all(|b| b.is_ascii_alphanumeric()))
+    {
         return Err(Error::new(
             "cleanup_identity",
             "cleanup",
@@ -134,17 +139,20 @@ mod tests {
     fn cancel_hash_and_cleanup_only_owned_file() {
         let dir = std::env::temp_dir().join(crate::uid());
         fs::create_dir(&dir).unwrap();
-        let path = dir.join(".framelean-test.partial.mp4");
-        fs::write(&path, b"original").unwrap();
-        let id = identity(&File::open(&path).unwrap()).unwrap();
-        assert_eq!(
-            hash(&path, &AtomicBool::new(true)).unwrap_err().code,
-            "canceled"
-        );
-        assert!(cleanup("test", &path, &json!({"volume":0,"file":0})).is_err());
-        assert!(path.exists());
-        cleanup("test", &path, &id).unwrap();
-        cleanup("test", &path, &Value::Null).unwrap();
+        for extension in ["mp4", "mkv"] {
+            let path = dir.join(format!(".framelean-test.partial.{extension}"));
+            fs::write(&path, b"original").unwrap();
+            let id = identity(&File::open(&path).unwrap()).unwrap();
+            assert_eq!(
+                hash(&path, &AtomicBool::new(true)).unwrap_err().code,
+                "canceled"
+            );
+            assert!(cleanup("test", &path, &json!({"volume":0,"file":0})).is_err());
+            assert!(path.exists());
+            assert!(cleanup("other", &path, &id).is_err());
+            cleanup("test", &path, &id).unwrap();
+            cleanup("test", &path, &Value::Null).unwrap();
+        }
         fs::remove_dir(dir).unwrap();
     }
 }

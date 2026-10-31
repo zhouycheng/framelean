@@ -62,7 +62,7 @@ pub fn worker(library: PathBuf) -> Result<()> {
     write!(
         file,
         "{}",
-        json!({"protocol_version":3,"url":format!("http://{}",server.server_addr()),"token":service.token,"pid":std::process::id(),"instance_id":service.events.instance})
+        json!({"protocol_version":fll_contracts::HTTP_VERSION,"url":format!("http://{}",server.server_addr()),"token":service.token,"pid":std::process::id(),"instance_id":service.events.instance})
     )?;
     file.sync_all()?;
     drop(file);
@@ -75,7 +75,7 @@ pub fn worker(library: PathBuf) -> Result<()> {
     let streams = Arc::new(AtomicUsize::new(0));
     while !service.stopped.load(Ordering::SeqCst) {
         if let Some(req) = server.recv_timeout(Duration::from_millis(100))? {
-            let sse = req.url().starts_with("/v3/events");
+            let sse = req.url().starts_with("/v4/events");
             if active.load(Ordering::SeqCst) >= 16 || (sse && streams.load(Ordering::SeqCst) >= 8) {
                 gateway::reply(
                     req,

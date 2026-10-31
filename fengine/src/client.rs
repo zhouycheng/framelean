@@ -25,7 +25,7 @@ impl Client {
             let bytes = fs::read(crate::runtime_dir().join("endpoint.json"))
                 .map_err(|e| Error::new("worker_unavailable", "connect", e))?;
             let endpoint: Endpoint = serde_json::from_slice(&bytes)?;
-            if endpoint.protocol_version != 3 {
+            if endpoint.protocol_version != fll_contracts::HTTP_VERSION {
                 return Err(Error::new(
                     "protocol_mismatch",
                     "connect",
@@ -124,7 +124,7 @@ impl Client {
         Ok(())
     }
     pub fn call(&self, name: &str, body: Option<Value>) -> Result<Value> {
-        let url = format!("{}/v3/{name}", self.endpoint.url);
+        let url = format!("{}/v4/{name}", self.endpoint.url);
         let auth = format!("Bearer {}", self.endpoint.token);
         let response = if let Some(mut body) = body {
             if body["request_id"].is_null() {

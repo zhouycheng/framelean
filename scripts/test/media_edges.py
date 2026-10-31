@@ -12,7 +12,7 @@ import subprocess
 import sys
 import tempfile
 
-from v3_integration import APIError, Worker, ffmpeg, frame_timestamps, wait
+from v4_integration import APIError, Worker, ffmpeg, frame_timestamps, wait
 
 
 @contextlib.contextmanager
@@ -48,6 +48,7 @@ def main():
     for key in ('engine', 'library', 'cli', 'sample'):
         p.add_argument('--'+key, required=True)
     p.add_argument('--report')
+    p.add_argument('--operation', choices=['compress', 'convert'], default='compress')
     a = p.parse_args()
     engine, library, cli, sample = [str(Path(getattr(a, k)).resolve()) for k in ('engine', 'library', 'cli', 'sample')]
     checks = []
@@ -66,7 +67,7 @@ def main():
             w.start()
             for path in (vfr, offset):
                 aid = w.analyze([path])[0]['id']
-                task = w.terminal(w.enqueue(aid)['task_ids'][0])
+                task = w.terminal(w.enqueue(aid, operation=a.operation)['task_ids'][0])
                 assert task['latest_attempt']['status'] == 'succeeded', task
                 result = Path(task['outputs'][0]['final_path'])
                 before, after = frame_timestamps(path), frame_timestamps(result)
@@ -76,7 +77,7 @@ def main():
             readonly = root/'readonly'; readonly.mkdir(); readonly.chmod(0o555)
             try:
                 try:
-                    w.enqueue(aid, output_directory=str(readonly))
+                    w.enqueue(aid, operation=a.operation, output_directory=str(readonly))
                     raise AssertionError('Read-only directory was accepted')
                 except APIError:
                     assert not list(readonly.iterdir())
@@ -96,7 +97,7 @@ def main():
                 filler = None
                 try:
                     w.start(); aid = w.analyze([long])[0]['id']
-                    queued = w.enqueue(aid)
+                    queued = w.enqueue(aid, operation=a.operation)
                     w.active(queued['attempt_ids'][0])
                     filler = fill(volume)
                     task = w.terminal(queued['task_ids'][0])
@@ -131,7 +132,7 @@ def main():
                     if filler: filler.unlink()
                     w.stop()
                 passed('real SQLite volume full rolls back, degrades, retains queued work on restart')
-        report = {'suite': 'media-edges', 'platform': sys.platform, 'checks': checks, 'passed': len(checks)}
+        report = {'suite': 'media-edges', 'operation': a.operation, 'platform': sys.platform, 'checks': checks, 'passed': len(checks)}
         if a.report:
             Path(a.report).write_text(json.dumps(report, indent=2)+'\n')
         print(json.dumps(report, indent=2))

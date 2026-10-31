@@ -67,7 +67,7 @@ impl Events {
     }
     pub fn snapshot(&self) -> Value {
         let s = self.state.lock().unwrap();
-        json!({"protocol_version":3,"instance_id":self.instance,"seq":s.seq,"event_id":format!("{}:{}",self.instance,s.seq),"active":s.active,"lifecycle":s.lifecycle,"health":s.health})
+        json!({"protocol_version":fll_contracts::HTTP_VERSION,"instance_id":self.instance,"seq":s.seq,"event_id":format!("{}:{}",self.instance,s.seq),"active":s.active,"lifecycle":s.lifecycle,"health":s.health})
     }
     pub fn after(&self, cursor: Option<&str>) -> Option<Vec<Value>> {
         let s = self.state.lock().unwrap();

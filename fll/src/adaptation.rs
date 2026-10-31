@@ -1,6 +1,20 @@
 //! Central media constraints; diagnostics are separate from probe success.
 use fll_contracts::*;
-pub const RULES_VERSION: &str = "preserve-1";
+pub const RULES_VERSION: &str = "preserve-3";
+pub(crate) fn output_diagnostic(media: &MediaFacts, container: &str) -> Option<Diagnostic> {
+    // MP4's packed language field preserves three lowercase ASCII letters.
+    (container == "mp4"
+        && media.tracks.iter().any(|t| {
+            t.language.as_ref().is_some_and(|language| {
+                language.len() != 3 || !language.bytes().all(|b| b.is_ascii_lowercase())
+            })
+        }))
+    .then(|| Diagnostic {
+        code: "mp4_language_unsupported".into(),
+        message: "MP4 无法完整保留当前轨道语言标记".into(),
+        required_facts: vec![],
+    })
+}
 pub(crate) fn evaluate(media: &MediaFacts) -> Vec<Diagnostic> {
     let mut result = Vec::new();
     let mut reject = |code: &str, message: &str, required: Vec<String>| {
@@ -13,11 +27,18 @@ pub(crate) fn evaluate(media: &MediaFacts) -> Vec<Diagnostic> {
     if !media
         .container
         .split(',')
-        .any(|c| matches!(c, "mov" | "mp4"))
+        .any(|c| matches!(c, "mov" | "mp4" | "matroska"))
     {
         reject(
             "container_unsupported",
-            "当前压缩链需要 MP4/MOV 容器",
+            "当前处理链需要 MP4/MOV/MKV 容器",
+            vec![],
+        );
+    }
+    if media.chapter_count != 0 || media.program_count != 0 {
+        reject(
+            "extra_structure_unsupported",
+            "章节或节目结构保留链尚未接通",
             vec![],
         );
     }
@@ -37,11 +58,18 @@ pub(crate) fn evaluate(media: &MediaFacts) -> Vec<Diagnostic> {
     if video.len() != 1 || audio.len() > 1 || media.tracks.len() != video.len() + audio.len() {
         reject(
             "track_mapping_unavailable",
-            "当前压缩链只支持单视频与零或单 AAC 音轨",
+            "当前处理链只支持单视频与零或单 AAC 音轨",
             vec![],
         );
     }
     for t in &media.tracks {
+        if t.disposition & !1 != 0 || t.side_data.iter().any(|s| s != "CPB properties") {
+            reject(
+                "track_semantics_unsupported",
+                "轨道附加信息保留链尚未接通",
+                vec![],
+            );
+        }
         if t.time_base.get().is_none() {
             reject(
                 "needs_analysis",
@@ -58,10 +86,10 @@ pub(crate) fn evaluate(media: &MediaFacts) -> Vec<Diagnostic> {
         }
     }
     for t in video {
-        if t.codec.get().map(String::as_str) != Some("h264") {
+        if !matches!(t.codec.get().map(String::as_str), Some("h264" | "hevc")) {
             reject(
                 "video_codec_unsupported",
-                "当前压缩链需要 H.264 视频",
+                "当前处理链需要 H.264 或 HEVC 视频",
                 vec![],
             );
         }
@@ -71,7 +99,7 @@ pub(crate) fn evaluate(media: &MediaFacts) -> Vec<Diagnostic> {
             {
                 reject(
                     "pixel_format_unsupported",
-                    "当前压缩链需要 8-bit yuv420p",
+                    "当前处理链需要 8-bit yuv420p",
                     vec![],
                 );
             }
@@ -80,7 +108,7 @@ pub(crate) fn evaluate(media: &MediaFacts) -> Vec<Diagnostic> {
             {
                 reject(
                     "dimensions_unsupported",
-                    "保持尺寸的压缩需要已知偶数宽高",
+                    "保持尺寸的处理需要已知偶数宽高",
                     vec![],
                 );
             }

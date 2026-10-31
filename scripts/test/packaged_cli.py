@@ -30,12 +30,15 @@ def main():
         suffix = '.exe' if os.name == 'nt' else ''
         cli = str(runtime/('framelean'+suffix))
         try:
-            r = subprocess.run([cli, '--json', 'compress', sample, '--output', str(output), '--wait'],
-                               env=env, cwd=root, capture_output=True, text=True, timeout=120)
-            if r.returncode:
-                # Keep diagnostics private; the committed report contains only assertions.
-                raise AssertionError(f'Independent bundle failed ({r.returncode}): {r.stdout} {r.stderr}')
-            assert json.loads(r.stdout)['tasks'][0]['latest_attempt']['status'] == 'succeeded'
+            for command in (['compress', '--preset', 'quality'], ['convert', '--format', 'mkv']):
+                r = subprocess.run([cli, '--json', *command, sample, '--output', str(output), '--wait'],
+                                   env=env, cwd=root, capture_output=True, text=True, timeout=120)
+                if r.returncode:
+                    # Keep diagnostics private; the committed report contains only assertions.
+                    raise AssertionError(f'Independent bundle failed ({r.returncode}): {r.stdout} {r.stderr}')
+                task = json.loads(r.stdout)['tasks'][0]
+                assert task['latest_attempt']['status'] == 'succeeded'
+                assert task['task']['plan_json']['schema_version'] == 2
         finally:
             stopped = subprocess.run([cli, '--json', 'worker', 'stop'], env=env, cwd=root, capture_output=True, timeout=30)
             endpoint = root/'connection/endpoint.json'
@@ -48,7 +51,8 @@ def main():
                            env=env, cwd=root, capture_output=True, text=True, timeout=40)
         assert r.returncode and json.loads(r.stdout)['error']['code'] == 'component_unavailable'
     report = {'independent_copy': True, 'minimal_system_path': True, 'no_component_overrides': True,
-              'compression_succeeded': True, 'missing_bundled_dependency_diagnosed': True}
+              'compression_succeeded': True, 'conversion_succeeded': True,
+              'missing_bundled_dependency_diagnosed': True}
     if args.report:
         Path(args.report).write_text(json.dumps(report, indent=2)+'\n')
     print(json.dumps(report, indent=2))

@@ -1,0 +1,1366 @@
+{
+  "date": "2026-10-31",
+  "platform": "macOS arm64",
+  "versions": {
+    "http": 4,
+    "fll_json": 3,
+    "media_facts": 2,
+    "execution_plan": 2,
+    "c_abi": 1,
+    "sqlite": 2
+  },
+  "results": {
+    "p1-regression": {
+      "suite": "v3-integration",
+      "platform": "Darwin",
+      "checks": [
+        "mixed media facts, unsupported choices hidden, batch intersection, request deduplication",
+        "JSON version and fields, immutable execution plan, source hardlink protection, atomic batch rejection",
+        "real decode, AAC packet/timestamp equality, silent input, Unicode paths, collision and retry history",
+        "Host crash isolation, active cancellation bound, CLI observation exit and reconnect",
+        "running Worker interruption, source change and output write failure",
+        "probeable late corruption fails execution without publishing damaged result",
+        "actual abort/restart at validation, intent, link, success commit and persisted cancel intent",
+        "cancel during publication converges to successful published result",
+        "unavailable output directory remains reconciling and explicit reconciliation succeeds",
+        "identical unrelated file is preserved rather than mistaken for published hardlink",
+        "cleanup identity failure preserves file and successful result",
+        "10000 attempt history bounded pagination and slow event subscription responsiveness",
+        "512 MiB publication hash recovery keeps snapshot responsive",
+        "missing FLL is diagnosable without terminating gateway",
+        "FLL ABI and JSON negotiation diagnose old components"
+      ],
+      "passed": 15,
+      "windows": "not tested"
+    },
+    "p1-edges": {
+      "suite": "media-edges",
+      "platform": "darwin",
+      "checks": [
+        "VFR frames and nonzero AV offset preserved",
+        "read-only output rejected without files",
+        "real ENOSPC during encoding, no publication, owned temporary cleaned",
+        "real SQLite volume full rolls back, degrades, retains queued work on restart"
+      ],
+      "passed": 4
+    },
+    "v4-regression": {
+      "suite": "v4-integration",
+      "platform": "Darwin",
+      "checks": [
+        "mixed media facts, unsupported choices hidden, batch intersection, request deduplication",
+        "JSON version and fields, immutable execution plan, source hardlink protection, atomic batch rejection",
+        "real decode, AAC packet/timestamp equality, silent input, Unicode paths, collision and retry history",
+        "Host crash isolation, active cancellation bound, CLI observation exit and reconnect",
+        "running Worker interruption, source change and output write failure",
+        "probeable late corruption fails execution without publishing damaged result",
+        "actual abort/restart at validation, intent, link, success commit and persisted cancel intent",
+        "cancel during publication converges to successful published result",
+        "unavailable output directory remains reconciling and explicit reconciliation succeeds",
+        "identical unrelated file is preserved rather than mistaken for published hardlink",
+        "cleanup identity failure preserves file and successful result",
+        "10000 attempt history bounded pagination and slow event subscription responsiveness",
+        "512 MiB publication hash recovery keeps snapshot responsive",
+        "missing FLL is diagnosable without terminating gateway",
+        "FLL ABI and JSON negotiation diagnose old components"
+      ],
+      "passed": 15,
+      "windows": "not tested"
+    },
+    "conversion": {
+      "suite": "p2-conversion",
+      "fixtures": 12,
+      "checks": [
+        "matrix h264-mp4-True.mp4",
+        "matrix h264-mp4-False.mp4",
+        "matrix h264-mov-True.mov",
+        "matrix h264-mov-False.mov",
+        "matrix h264-mkv-True.mkv",
+        "matrix h264-mkv-False.mkv",
+        "matrix hevc-mp4-True.mp4",
+        "matrix hevc-mp4-False.mp4",
+        "matrix hevc-mov-True.mov",
+        "matrix hevc-mov-False.mov",
+        "matrix hevc-mkv-True.mkv",
+        "matrix hevc-mkv-False.mkv",
+        "three presets, legacy alias and collision-safe output",
+        "chapters identified, incompatible batch rejected before enqueue",
+        "subtitle, attachment and HEVC 10-bit facts exclude unsupported choices",
+        "mixed H264 and HEVC batch shares selection with distinct execution chains",
+        "CLI requires conversion format and rejects unknown preset"
+      ],
+      "passed": 17,
+      "measurements": [
+        {
+          "input": "h264-mp4-True.mp4",
+          "operation": "compress",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 2.306,
+          "source_bytes": 387379,
+          "output_bytes": 165921,
+          "frames": 72
+        },
+        {
+          "input": "h264-mp4-True.mp4",
+          "operation": "compress",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 2.207,
+          "source_bytes": 387379,
+          "output_bytes": 164999,
+          "frames": 72
+        },
+        {
+          "input": "h264-mp4-True.mp4",
+          "operation": "convert",
+          "output": "mp4",
+          "mode": "remux",
+          "seconds": 2.779,
+          "source_bytes": 387379,
+          "output_bytes": 387379,
+          "frames": 72
+        },
+        {
+          "input": "h264-mp4-True.mp4",
+          "operation": "convert",
+          "output": "mkv",
+          "mode": "remux",
+          "seconds": 1.901,
+          "source_bytes": 387379,
+          "output_bytes": 386939,
+          "frames": 72
+        },
+        {
+          "input": "h264-mp4-False.mp4",
+          "operation": "compress",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.834,
+          "source_bytes": 325183,
+          "output_bytes": 103737,
+          "frames": 72
+        },
+        {
+          "input": "h264-mp4-False.mp4",
+          "operation": "compress",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 1.808,
+          "source_bytes": 325183,
+          "output_bytes": 103447,
+          "frames": 72
+        },
+        {
+          "input": "h264-mp4-False.mp4",
+          "operation": "convert",
+          "output": "mp4",
+          "mode": "remux",
+          "seconds": 1.966,
+          "source_bytes": 325183,
+          "output_bytes": 325183,
+          "frames": 72
+        },
+        {
+          "input": "h264-mp4-False.mp4",
+          "operation": "convert",
+          "output": "mkv",
+          "mode": "remux",
+          "seconds": 1.901,
+          "source_bytes": 325183,
+          "output_bytes": 325380,
+          "frames": 72
+        },
+        {
+          "input": "h264-mov-True.mov",
+          "operation": "compress",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.87,
+          "source_bytes": 387352,
+          "output_bytes": 165879,
+          "frames": 72
+        },
+        {
+          "input": "h264-mov-True.mov",
+          "operation": "compress",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 1.818,
+          "source_bytes": 387352,
+          "output_bytes": 165004,
+          "frames": 72
+        },
+        {
+          "input": "h264-mov-True.mov",
+          "operation": "convert",
+          "output": "mp4",
+          "mode": "remux",
+          "seconds": 2.521,
+          "source_bytes": 387352,
+          "output_bytes": 387337,
+          "frames": 72
+        },
+        {
+          "input": "h264-mov-True.mov",
+          "operation": "convert",
+          "output": "mkv",
+          "mode": "remux",
+          "seconds": 2.503,
+          "source_bytes": 387352,
+          "output_bytes": 386944,
+          "frames": 72
+        },
+        {
+          "input": "h264-mov-False.mov",
+          "operation": "compress",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 2.627,
+          "source_bytes": 325052,
+          "output_bytes": 103695,
+          "frames": 72
+        },
+        {
+          "input": "h264-mov-False.mov",
+          "operation": "compress",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 5.08,
+          "source_bytes": 325052,
+          "output_bytes": 103422,
+          "frames": 72
+        },
+        {
+          "input": "h264-mov-False.mov",
+          "operation": "convert",
+          "output": "mp4",
+          "mode": "remux",
+          "seconds": 2.991,
+          "source_bytes": 325052,
+          "output_bytes": 325141,
+          "frames": 72
+        },
+        {
+          "input": "h264-mov-False.mov",
+          "operation": "convert",
+          "output": "mkv",
+          "mode": "remux",
+          "seconds": 2.739,
+          "source_bytes": 325052,
+          "output_bytes": 325355,
+          "frames": 72
+        },
+        {
+          "input": "h264-mkv-True.mkv",
+          "operation": "compress",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 2.038,
+          "source_bytes": 386935,
+          "output_bytes": 167064,
+          "frames": 72
+        },
+        {
+          "input": "h264-mkv-True.mkv",
+          "operation": "compress",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 3.417,
+          "source_bytes": 386935,
+          "output_bytes": 164799,
+          "frames": 72
+        },
+        {
+          "input": "h264-mkv-True.mkv",
+          "operation": "convert",
+          "output": "mp4",
+          "mode": "remux",
+          "seconds": 2.153,
+          "source_bytes": 386935,
+          "output_bytes": 388491,
+          "frames": 72
+        },
+        {
+          "input": "h264-mkv-True.mkv",
+          "operation": "convert",
+          "output": "mkv",
+          "mode": "remux",
+          "seconds": 2.206,
+          "source_bytes": 386935,
+          "output_bytes": 386939,
+          "frames": 72
+        },
+        {
+          "input": "h264-mkv-False.mkv",
+          "operation": "compress",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.972,
+          "source_bytes": 325376,
+          "output_bytes": 104132,
+          "frames": 72
+        },
+        {
+          "input": "h264-mkv-False.mkv",
+          "operation": "compress",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 2.032,
+          "source_bytes": 325376,
+          "output_bytes": 103247,
+          "frames": 72
+        },
+        {
+          "input": "h264-mkv-False.mkv",
+          "operation": "convert",
+          "output": "mp4",
+          "mode": "remux",
+          "seconds": 1.932,
+          "source_bytes": 325376,
+          "output_bytes": 325559,
+          "frames": 72
+        },
+        {
+          "input": "h264-mkv-False.mkv",
+          "operation": "convert",
+          "output": "mkv",
+          "mode": "remux",
+          "seconds": 2.017,
+          "source_bytes": 325376,
+          "output_bytes": 325380,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mp4-True.mp4",
+          "operation": "compress",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.938,
+          "source_bytes": 113866,
+          "output_bytes": 137430,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mp4-True.mp4",
+          "operation": "compress",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 1.838,
+          "source_bytes": 113866,
+          "output_bytes": 136308,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mp4-True.mp4",
+          "operation": "convert",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.84,
+          "source_bytes": 113866,
+          "output_bytes": 137430,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mp4-True.mp4",
+          "operation": "convert",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 2.101,
+          "source_bytes": 113866,
+          "output_bytes": 136308,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mp4-False.mp4",
+          "operation": "compress",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.887,
+          "source_bytes": 51682,
+          "output_bytes": 75246,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mp4-False.mp4",
+          "operation": "compress",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 1.873,
+          "source_bytes": 51682,
+          "output_bytes": 74756,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mp4-False.mp4",
+          "operation": "convert",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.825,
+          "source_bytes": 51682,
+          "output_bytes": 75246,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mp4-False.mp4",
+          "operation": "convert",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 1.793,
+          "source_bytes": 51682,
+          "output_bytes": 74756,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mov-True.mov",
+          "operation": "compress",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.822,
+          "source_bytes": 113843,
+          "output_bytes": 137388,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mov-True.mov",
+          "operation": "compress",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 2.024,
+          "source_bytes": 113843,
+          "output_bytes": 136318,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mov-True.mov",
+          "operation": "convert",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.914,
+          "source_bytes": 113843,
+          "output_bytes": 137388,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mov-True.mov",
+          "operation": "convert",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 1.822,
+          "source_bytes": 113843,
+          "output_bytes": 136318,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mov-False.mov",
+          "operation": "compress",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.886,
+          "source_bytes": 51555,
+          "output_bytes": 75204,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mov-False.mov",
+          "operation": "compress",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 1.875,
+          "source_bytes": 51555,
+          "output_bytes": 74736,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mov-False.mov",
+          "operation": "convert",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.825,
+          "source_bytes": 51555,
+          "output_bytes": 75204,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mov-False.mov",
+          "operation": "convert",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 2.268,
+          "source_bytes": 51555,
+          "output_bytes": 74736,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mkv-True.mkv",
+          "operation": "compress",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.833,
+          "source_bytes": 112702,
+          "output_bytes": 138641,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mkv-True.mkv",
+          "operation": "compress",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 1.819,
+          "source_bytes": 112702,
+          "output_bytes": 136315,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mkv-True.mkv",
+          "operation": "convert",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.818,
+          "source_bytes": 112702,
+          "output_bytes": 138641,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mkv-True.mkv",
+          "operation": "convert",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 1.943,
+          "source_bytes": 112702,
+          "output_bytes": 136315,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mkv-False.mkv",
+          "operation": "compress",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.96,
+          "source_bytes": 51150,
+          "output_bytes": 75709,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mkv-False.mkv",
+          "operation": "compress",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 1.844,
+          "source_bytes": 51150,
+          "output_bytes": 74763,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mkv-False.mkv",
+          "operation": "convert",
+          "output": "mp4",
+          "mode": "transcode",
+          "seconds": 1.873,
+          "source_bytes": 51150,
+          "output_bytes": 75709,
+          "frames": 72
+        },
+        {
+          "input": "hevc-mkv-False.mkv",
+          "operation": "convert",
+          "output": "mkv",
+          "mode": "transcode",
+          "seconds": 1.875,
+          "source_bytes": 51150,
+          "output_bytes": 74763,
+          "frames": 72
+        },
+        {
+          "preset": "quality",
+          "crf": 18,
+          "seconds": 1.673,
+          "output_bytes": 272908,
+          "ssim": 0.985657
+        },
+        {
+          "preset": "balanced",
+          "crf": 23,
+          "seconds": 1.719,
+          "output_bytes": 165921,
+          "ssim": 0.963125
+        },
+        {
+          "preset": "small",
+          "crf": 28,
+          "seconds": 1.675,
+          "output_bytes": 110957,
+          "ssim": 0.925148
+        },
+        {
+          "preset": "h264_crf23",
+          "crf": 23,
+          "seconds": 1.866,
+          "output_bytes": 165921,
+          "ssim": 0.963125
+        }
+      ]
+    },
+    "lifecycle": {
+      "suite": "p2-lifecycle",
+      "checks": [
+        "running conversion Worker abort preserves interrupted state and cleans owned output",
+        "conversion Host crash, bounded cancel and subsequent task success",
+        "conversion abort recovery at validation, publish intent, link and successful commit",
+        "conversion cancellation intent survives Worker abort",
+        "conversion observer exit/reconnect and naming collisions",
+        "conversion rejects changed source and missing output directory",
+        "legacy publishing plan reconciles registered output before new-plan checks",
+        "old queued plan retired, history retained, schema unchanged and retry requires replanning"
+      ],
+      "passed": 8
+    },
+    "compress-edges": {
+      "suite": "media-edges",
+      "operation": "compress",
+      "platform": "darwin",
+      "checks": [
+        "VFR frames and nonzero AV offset preserved",
+        "read-only output rejected without files",
+        "real ENOSPC during encoding, no publication, owned temporary cleaned",
+        "real SQLite volume full rolls back, degrades, retains queued work on restart"
+      ],
+      "passed": 4
+    },
+    "convert-edges": {
+      "suite": "media-edges",
+      "operation": "convert",
+      "platform": "darwin",
+      "checks": [
+        "VFR frames and nonzero AV offset preserved",
+        "read-only output rejected without files",
+        "real ENOSPC during encoding, no publication, owned temporary cleaned",
+        "real SQLite volume full rolls back, degrades, retains queued work on restart"
+      ],
+      "passed": 4
+    },
+    "package": {
+      "independent_copy": true,
+      "minimal_system_path": true,
+      "no_component_overrides": true,
+      "compression_succeeded": true,
+      "conversion_succeeded": true,
+      "missing_bundled_dependency_diagnosed": true
+    },
+    "upgrade": {
+      "real_v3_history_preserved": true,
+      "old_queued_plan_requires_replanning": true,
+      "database_user_version": 2
+    },
+    "native": {
+      "independent_desktop_copy": true,
+      "system_path_only": true,
+      "preset_selection": "quality",
+      "window_closed_worker_pid_unchanged": true,
+      "progress_before_close": 0.1429856538387187,
+      "progress_after_close": 0.7676802458584685,
+      "reopened_completed_state_observed": true,
+      "cli_conversion_displayed": true,
+      "formal_exit_endpoint_removed": true,
+      "quicktime_mp4_playback_observed": true,
+      "media": [
+        {
+          "name": "体验 视频-compressed.mp4",
+          "bytes": 50690161,
+          "frames": 2880,
+          "max_pts_difference_seconds": 0.0
+        },
+        {
+          "name": "体验 视频-converted.mkv",
+          "bytes": 91652896,
+          "frames": 2880,
+          "max_pts_difference_seconds": 0.0003330000000048017
+        }
+      ]
+    }
+  },
+  "automated_checks": {
+    "contracts": 2,
+    "worker": 5,
+    "cli": 1,
+    "flutter_widget": 2,
+    "flutter_runtime": 1,
+    "flutter_analyze": "passed",
+    "rust_clippy": "passed"
+  },
+  "windows": "not tested",
+  "manual_audio_listening": "not performed",
+  "package_integrity": {
+    "signed_app_verification": "passed",
+    "binaries_with_local_dependencies_checked": 22,
+    "worker_links_fll_or_libav": false,
+    "zip_crc": "passed",
+    "sha256": [
+      "e7853b9e0a491770c4eb370c76f2267d67ffb00eb1598f01248d0bf947e4c96a  framelean-p2-cli-macos-arm64.zip",
+      "5a9d594c4f5e6588f21a5d6d30944592932ec7d135a131d91e734f8e2b3c0682  framelean-p2-desktop-macos-arm64.zip"
+    ]
+  },
+  "documentation": {
+    "html_unique_ids": 30,
+    "relative_links": "passed",
+    "html_rendering": "not repeated"
+  },
+  "pre_commit_review": {
+    "date": "2026-10-31",
+    "finding": "Extended MKV language tags now exclude MP4 before enqueue; MKV choices remain executable. Flutter requests its current MP4 target.",
+    "p1_commit_snapshot": "built independently from staged files and verified against HTTP v3",
+    "results": {
+      "p1-regression": {
+        "suite": "v3-integration",
+        "platform": "Darwin",
+        "checks": [
+          "mixed media facts, unsupported choices hidden, batch intersection, request deduplication",
+          "JSON version and fields, immutable execution plan, source hardlink protection, atomic batch rejection",
+          "real decode, AAC packet/timestamp equality, silent input, Unicode paths, collision and retry history",
+          "Host crash isolation, active cancellation bound, CLI observation exit and reconnect",
+          "running Worker interruption, source change and output write failure",
+          "probeable late corruption fails execution without publishing damaged result",
+          "actual abort/restart at validation, intent, link, success commit and persisted cancel intent",
+          "cancel during publication converges to successful published result",
+          "unavailable output directory remains reconciling and explicit reconciliation succeeds",
+          "identical unrelated file is preserved rather than mistaken for published hardlink",
+          "cleanup identity failure preserves file and successful result",
+          "10000 attempt history bounded pagination and slow event subscription responsiveness",
+          "512 MiB publication hash recovery keeps snapshot responsive",
+          "missing FLL is diagnosable without terminating gateway",
+          "FLL ABI and JSON negotiation diagnose old components"
+        ],
+        "passed": 15,
+        "windows": "not tested"
+      },
+      "p1-edges": {
+        "suite": "media-edges",
+        "platform": "darwin",
+        "checks": [
+          "VFR frames and nonzero AV offset preserved",
+          "read-only output rejected without files",
+          "real ENOSPC during encoding, no publication, owned temporary cleaned",
+          "real SQLite volume full rolls back, degrades, retains queued work on restart"
+        ],
+        "passed": 4
+      },
+      "v4": {
+        "suite": "v4-integration",
+        "platform": "Darwin",
+        "checks": [
+          "mixed media facts, unsupported choices hidden, batch intersection, request deduplication",
+          "JSON version and fields, immutable execution plan, source hardlink protection, atomic batch rejection",
+          "real decode, AAC packet/timestamp equality, silent input, Unicode paths, collision and retry history",
+          "Host crash isolation, active cancellation bound, CLI observation exit and reconnect",
+          "running Worker interruption, source change and output write failure",
+          "probeable late corruption fails execution without publishing damaged result",
+          "actual abort/restart at validation, intent, link, success commit and persisted cancel intent",
+          "cancel during publication converges to successful published result",
+          "unavailable output directory remains reconciling and explicit reconciliation succeeds",
+          "identical unrelated file is preserved rather than mistaken for published hardlink",
+          "cleanup identity failure preserves file and successful result",
+          "10000 attempt history bounded pagination and slow event subscription responsiveness",
+          "512 MiB publication hash recovery keeps snapshot responsive",
+          "missing FLL is diagnosable without terminating gateway",
+          "FLL ABI and JSON negotiation diagnose old components"
+        ],
+        "passed": 15,
+        "windows": "not tested"
+      },
+      "conversion": {
+        "suite": "p2-conversion",
+        "fixtures": 12,
+        "checks": [
+          "matrix h264-mp4-True.mp4",
+          "matrix h264-mp4-False.mp4",
+          "matrix h264-mov-True.mov",
+          "matrix h264-mov-False.mov",
+          "matrix h264-mkv-True.mkv",
+          "matrix h264-mkv-False.mkv",
+          "matrix hevc-mp4-True.mp4",
+          "matrix hevc-mp4-False.mp4",
+          "matrix hevc-mov-True.mov",
+          "matrix hevc-mov-False.mov",
+          "matrix hevc-mkv-True.mkv",
+          "matrix hevc-mkv-False.mkv",
+          "three presets, legacy alias and collision-safe output",
+          "chapters identified, incompatible batch rejected before enqueue",
+          "subtitle, attachment and HEVC 10-bit facts exclude unsupported choices",
+          "mixed H264 and HEVC batch shares selection with distinct execution chains",
+          "extended language hides MP4 before enqueue and remains preserved in MKV",
+          "CLI requires conversion format and rejects unknown preset"
+        ],
+        "passed": 18,
+        "measurements": [
+          {
+            "input": "h264-mp4-True.mp4",
+            "operation": "compress",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.994,
+            "source_bytes": 387379,
+            "output_bytes": 165921,
+            "frames": 72
+          },
+          {
+            "input": "h264-mp4-True.mp4",
+            "operation": "compress",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.926,
+            "source_bytes": 387379,
+            "output_bytes": 164999,
+            "frames": 72
+          },
+          {
+            "input": "h264-mp4-True.mp4",
+            "operation": "convert",
+            "output": "mp4",
+            "mode": "remux",
+            "seconds": 2.008,
+            "source_bytes": 387379,
+            "output_bytes": 387379,
+            "frames": 72
+          },
+          {
+            "input": "h264-mp4-True.mp4",
+            "operation": "convert",
+            "output": "mkv",
+            "mode": "remux",
+            "seconds": 1.913,
+            "source_bytes": 387379,
+            "output_bytes": 386939,
+            "frames": 72
+          },
+          {
+            "input": "h264-mp4-False.mp4",
+            "operation": "compress",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.885,
+            "source_bytes": 325183,
+            "output_bytes": 103737,
+            "frames": 72
+          },
+          {
+            "input": "h264-mp4-False.mp4",
+            "operation": "compress",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.814,
+            "source_bytes": 325183,
+            "output_bytes": 103447,
+            "frames": 72
+          },
+          {
+            "input": "h264-mp4-False.mp4",
+            "operation": "convert",
+            "output": "mp4",
+            "mode": "remux",
+            "seconds": 1.922,
+            "source_bytes": 325183,
+            "output_bytes": 325183,
+            "frames": 72
+          },
+          {
+            "input": "h264-mp4-False.mp4",
+            "operation": "convert",
+            "output": "mkv",
+            "mode": "remux",
+            "seconds": 1.916,
+            "source_bytes": 325183,
+            "output_bytes": 325380,
+            "frames": 72
+          },
+          {
+            "input": "h264-mov-True.mov",
+            "operation": "compress",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.879,
+            "source_bytes": 387352,
+            "output_bytes": 165879,
+            "frames": 72
+          },
+          {
+            "input": "h264-mov-True.mov",
+            "operation": "compress",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.822,
+            "source_bytes": 387352,
+            "output_bytes": 165004,
+            "frames": 72
+          },
+          {
+            "input": "h264-mov-True.mov",
+            "operation": "convert",
+            "output": "mp4",
+            "mode": "remux",
+            "seconds": 1.992,
+            "source_bytes": 387352,
+            "output_bytes": 387337,
+            "frames": 72
+          },
+          {
+            "input": "h264-mov-True.mov",
+            "operation": "convert",
+            "output": "mkv",
+            "mode": "remux",
+            "seconds": 1.905,
+            "source_bytes": 387352,
+            "output_bytes": 386944,
+            "frames": 72
+          },
+          {
+            "input": "h264-mov-False.mov",
+            "operation": "compress",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.812,
+            "source_bytes": 325052,
+            "output_bytes": 103695,
+            "frames": 72
+          },
+          {
+            "input": "h264-mov-False.mov",
+            "operation": "compress",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.804,
+            "source_bytes": 325052,
+            "output_bytes": 103422,
+            "frames": 72
+          },
+          {
+            "input": "h264-mov-False.mov",
+            "operation": "convert",
+            "output": "mp4",
+            "mode": "remux",
+            "seconds": 1.9,
+            "source_bytes": 325052,
+            "output_bytes": 325141,
+            "frames": 72
+          },
+          {
+            "input": "h264-mov-False.mov",
+            "operation": "convert",
+            "output": "mkv",
+            "mode": "remux",
+            "seconds": 1.887,
+            "source_bytes": 325052,
+            "output_bytes": 325355,
+            "frames": 72
+          },
+          {
+            "input": "h264-mkv-True.mkv",
+            "operation": "compress",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.827,
+            "source_bytes": 386935,
+            "output_bytes": 167064,
+            "frames": 72
+          },
+          {
+            "input": "h264-mkv-True.mkv",
+            "operation": "compress",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.874,
+            "source_bytes": 386935,
+            "output_bytes": 164799,
+            "frames": 72
+          },
+          {
+            "input": "h264-mkv-True.mkv",
+            "operation": "convert",
+            "output": "mp4",
+            "mode": "remux",
+            "seconds": 1.956,
+            "source_bytes": 386935,
+            "output_bytes": 388491,
+            "frames": 72
+          },
+          {
+            "input": "h264-mkv-True.mkv",
+            "operation": "convert",
+            "output": "mkv",
+            "mode": "remux",
+            "seconds": 2.002,
+            "source_bytes": 386935,
+            "output_bytes": 386939,
+            "frames": 72
+          },
+          {
+            "input": "h264-mkv-False.mkv",
+            "operation": "compress",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.804,
+            "source_bytes": 325376,
+            "output_bytes": 104132,
+            "frames": 72
+          },
+          {
+            "input": "h264-mkv-False.mkv",
+            "operation": "compress",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.813,
+            "source_bytes": 325376,
+            "output_bytes": 103247,
+            "frames": 72
+          },
+          {
+            "input": "h264-mkv-False.mkv",
+            "operation": "convert",
+            "output": "mp4",
+            "mode": "remux",
+            "seconds": 1.962,
+            "source_bytes": 325376,
+            "output_bytes": 325559,
+            "frames": 72
+          },
+          {
+            "input": "h264-mkv-False.mkv",
+            "operation": "convert",
+            "output": "mkv",
+            "mode": "remux",
+            "seconds": 1.899,
+            "source_bytes": 325376,
+            "output_bytes": 325380,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mp4-True.mp4",
+            "operation": "compress",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.824,
+            "source_bytes": 113866,
+            "output_bytes": 137430,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mp4-True.mp4",
+            "operation": "compress",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.839,
+            "source_bytes": 113866,
+            "output_bytes": 136308,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mp4-True.mp4",
+            "operation": "convert",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.829,
+            "source_bytes": 113866,
+            "output_bytes": 137430,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mp4-True.mp4",
+            "operation": "convert",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.831,
+            "source_bytes": 113866,
+            "output_bytes": 136308,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mp4-False.mp4",
+            "operation": "compress",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.837,
+            "source_bytes": 51682,
+            "output_bytes": 75246,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mp4-False.mp4",
+            "operation": "compress",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.835,
+            "source_bytes": 51682,
+            "output_bytes": 74756,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mp4-False.mp4",
+            "operation": "convert",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.831,
+            "source_bytes": 51682,
+            "output_bytes": 75246,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mp4-False.mp4",
+            "operation": "convert",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.796,
+            "source_bytes": 51682,
+            "output_bytes": 74756,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mov-True.mov",
+            "operation": "compress",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.819,
+            "source_bytes": 113843,
+            "output_bytes": 137388,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mov-True.mov",
+            "operation": "compress",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.826,
+            "source_bytes": 113843,
+            "output_bytes": 136318,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mov-True.mov",
+            "operation": "convert",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.834,
+            "source_bytes": 113843,
+            "output_bytes": 137388,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mov-True.mov",
+            "operation": "convert",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.793,
+            "source_bytes": 113843,
+            "output_bytes": 136318,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mov-False.mov",
+            "operation": "compress",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.832,
+            "source_bytes": 51555,
+            "output_bytes": 75204,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mov-False.mov",
+            "operation": "compress",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.809,
+            "source_bytes": 51555,
+            "output_bytes": 74736,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mov-False.mov",
+            "operation": "convert",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.827,
+            "source_bytes": 51555,
+            "output_bytes": 75204,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mov-False.mov",
+            "operation": "convert",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.805,
+            "source_bytes": 51555,
+            "output_bytes": 74736,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mkv-True.mkv",
+            "operation": "compress",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.833,
+            "source_bytes": 112702,
+            "output_bytes": 138641,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mkv-True.mkv",
+            "operation": "compress",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.877,
+            "source_bytes": 112702,
+            "output_bytes": 136315,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mkv-True.mkv",
+            "operation": "convert",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.917,
+            "source_bytes": 112702,
+            "output_bytes": 138641,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mkv-True.mkv",
+            "operation": "convert",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.822,
+            "source_bytes": 112702,
+            "output_bytes": 136315,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mkv-False.mkv",
+            "operation": "compress",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.86,
+            "source_bytes": 51150,
+            "output_bytes": 75709,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mkv-False.mkv",
+            "operation": "compress",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.797,
+            "source_bytes": 51150,
+            "output_bytes": 74763,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mkv-False.mkv",
+            "operation": "convert",
+            "output": "mp4",
+            "mode": "transcode",
+            "seconds": 1.811,
+            "source_bytes": 51150,
+            "output_bytes": 75709,
+            "frames": 72
+          },
+          {
+            "input": "hevc-mkv-False.mkv",
+            "operation": "convert",
+            "output": "mkv",
+            "mode": "transcode",
+            "seconds": 1.796,
+            "source_bytes": 51150,
+            "output_bytes": 74763,
+            "frames": 72
+          },
+          {
+            "preset": "quality",
+            "crf": 18,
+            "seconds": 1.668,
+            "output_bytes": 272908,
+            "ssim": 0.985657
+          },
+          {
+            "preset": "balanced",
+            "crf": 23,
+            "seconds": 1.673,
+            "output_bytes": 165921,
+            "ssim": 0.963125
+          },
+          {
+            "preset": "small",
+            "crf": 28,
+            "seconds": 1.671,
+            "output_bytes": 110957,
+            "ssim": 0.925148
+          },
+          {
+            "preset": "h264_crf23",
+            "crf": 23,
+            "seconds": 1.67,
+            "output_bytes": 165921,
+            "ssim": 0.963125
+          }
+        ]
+      },
+      "lifecycle": {
+        "suite": "p2-lifecycle",
+        "checks": [
+          "running conversion Worker abort preserves interrupted state and cleans owned output",
+          "conversion Host crash, bounded cancel and subsequent task success",
+          "conversion abort recovery at validation, publish intent, link and successful commit",
+          "conversion cancellation intent survives Worker abort",
+          "conversion observer exit/reconnect and naming collisions",
+          "conversion rejects changed source and missing output directory",
+          "legacy publishing plan reconciles registered output before new-plan checks",
+          "old queued plan retired, history retained, schema unchanged and retry requires replanning"
+        ],
+        "passed": 8
+      },
+      "compress-edges": {
+        "suite": "media-edges",
+        "operation": "compress",
+        "platform": "darwin",
+        "checks": [
+          "VFR frames and nonzero AV offset preserved",
+          "read-only output rejected without files",
+          "real ENOSPC during encoding, no publication, owned temporary cleaned",
+          "real SQLite volume full rolls back, degrades, retains queued work on restart"
+        ],
+        "passed": 4
+      },
+      "convert-edges": {
+        "suite": "media-edges",
+        "operation": "convert",
+        "platform": "darwin",
+        "checks": [
+          "VFR frames and nonzero AV offset preserved",
+          "read-only output rejected without files",
+          "real ENOSPC during encoding, no publication, owned temporary cleaned",
+          "real SQLite volume full rolls back, degrades, retains queued work on restart"
+        ],
+        "passed": 4
+      },
+      "package": {
+        "independent_copy": true,
+        "minimal_system_path": true,
+        "no_component_overrides": true,
+        "compression_succeeded": true,
+        "conversion_succeeded": true,
+        "missing_bundled_dependency_diagnosed": true
+      }
+    },
+    "automated_checks_repeated": {
+      "contracts": 2,
+      "worker": 5,
+      "cli": 1,
+      "flutter_widget": 2,
+      "flutter_runtime": 1,
+      "flutter_analyze": "passed",
+      "rust_clippy": "passed"
+    },
+    "packages": "rebuilt, independent CLI copy tested, app signature and 22 binary dependency paths verified, ZIP CRC verified",
+    "native_ui": "original acceptance retained; model tests and real Worker reconnect repeated after review fix",
+    "html": "structure and relative links verified; rendering not repeated",
+    "windows": "not tested"
+  }
+}

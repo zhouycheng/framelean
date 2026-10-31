@@ -25,6 +25,21 @@ class ProcessingModel extends ChangeNotifier {
   bool get busy => snapshot['active'] != null;
   bool canProcess(String id) =>
       (choices[id]?['available_choices'] as List? ?? []).isNotEmpty;
+  List<Map<String, dynamic>> presetsFor(Iterable<String> ids) {
+    if (ids.isEmpty) return [];
+    final presets = (choices[ids.first]?['presets'] as List? ?? [])
+        .cast<Map<String, dynamic>>();
+    return presets
+        .where(
+          (p) => ids.every(
+            (id) => (choices[id]?['available_choices'] as List? ?? []).any(
+              (c) => c['preset'] == p['id'] && c['container'] == 'mp4',
+            ),
+          ),
+        )
+        .toList();
+  }
+
   String unavailableReason(String id) {
     final diagnostics = choices[id]?['diagnostics'] as List? ?? [];
     return diagnostics.isEmpty ? '正在查询可用方案' : '${diagnostics.first['message']}';
@@ -119,7 +134,10 @@ class ProcessingModel extends ChangeNotifier {
         .map((a) => a['id'])
         .toList();
     if (missing.isNotEmpty) {
-      final result = await gateway.call('options', {'analysis_ids': missing});
+      final result = await gateway.call('options', {
+        'analysis_ids': missing,
+        'format': 'mp4',
+      });
       if (_disposed) return;
       for (final item in result['items'] as List) {
         if (item['error']?['code'] == 'query_busy') {
@@ -188,17 +206,24 @@ class ProcessingModel extends ChangeNotifier {
     await command('analyze', {'inputs': paths});
   }
 
-  Future<void> enqueue(List<String> ids) async {
+  Future<void> enqueue(List<String> ids, {String? preset}) async {
     submitting = true;
     error = null;
     notifyListeners();
     try {
-      final options = await gateway.call('options', {'analysis_ids': ids});
+      final options = await gateway.call('options', {
+        'analysis_ids': ids,
+        'format': 'mp4',
+      });
       final available = options['available_choices'] as List;
       if (available.isEmpty) throw StateError('所选媒体没有共同可用方案');
+      final selection = preset == null
+          ? options['default_selection']
+          : available.where((c) => c['preset'] == preset).firstOrNull;
+      if (selection == null) throw StateError('所选预设已不可用，请重新选择');
       final planned = await gateway.call('plan', {
         'analysis_ids': ids,
-        'selection': available.first,
+        'selection': selection,
       });
       final items = <Map<String, dynamic>>[];
       for (final item in planned['items'] as List) {

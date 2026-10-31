@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 typedef struct FllOperation FllOperation;
-/* ABI version 1, JSON schema 2 (check fll_versions before start).
+/* ABI version 1, JSON schema 3 (check fll_versions before start).
    JSON strings are UTF-8; returned buffers belong to FLL. */
 uint32_t fll_abi_version(void);
 char *fll_versions(void);

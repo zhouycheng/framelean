@@ -96,7 +96,7 @@ pub fn receipt(c: &Connection, name: &str, body: &Value) -> Result<Option<Value>
     Ok(None)
 }
 pub fn request_digest(name: &str, body: &Value) -> String {
-    fll_contracts::digest(&(3, name, body))
+    fll_contracts::digest(&(fll_contracts::HTTP_VERSION, name, body))
 }
 pub fn summary(c: &Connection) -> Result<Value> {
     let (paused, revision): (bool, i64) = c.query_row(

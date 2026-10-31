@@ -1,5 +1,5 @@
 use crate::Operation;
-use fll_contracts::{ExecutionPlan, MediaFacts, ResourceGrant};
+use fll_contracts::{ExecutionPlan, MediaFacts, ProcessingParameters, ResourceGrant};
 use rusty_ffmpeg::ffi as av;
 use std::{
     ffi::{CStr, CString},
@@ -87,6 +87,62 @@ impl Drop for Packet {
 }
 struct Output(*mut av::AVFormatContext);
 impl Output {
+    fn new(plan: &ExecutionPlan, path: &str, input: &Input, op: &Operation) -> Result<Self> {
+        unsafe {
+            let mut out = ptr::null_mut();
+            check(av::avformat_alloc_output_context2(
+                &mut out,
+                ptr::null(),
+                cs(&plan.output.muxer)?.as_ptr(),
+                cs(path)?.as_ptr(),
+            ))?;
+            if out.is_null() {
+                return Err("output allocation failed".into());
+            }
+            let output = Self(out);
+            (*out).avoid_negative_ts = av::AVFMT_AVOID_NEG_TS_DISABLED as i32;
+            (*out).interrupt_callback = av::AVIOInterruptCB {
+                callback: Some(interrupt),
+                opaque: (&op.cancel as *const std::sync::atomic::AtomicBool)
+                    .cast_mut()
+                    .cast(),
+            };
+            check(av::av_dict_copy(
+                &mut (*out).metadata,
+                (*input.0).metadata,
+                0,
+            ))?;
+            Ok(output)
+        }
+    }
+    fn open(&self, path: &str) -> Result<()> {
+        unsafe {
+            let streams =
+                std::slice::from_raw_parts((*self.0).streams, (*self.0).nb_streams as usize);
+            if CStr::from_ptr((*(*self.0).oformat).name).to_bytes() == b"mp4"
+                && streams.iter().any(|s| {
+                    (*(**s).codecpar).codec_type == av::AVMEDIA_TYPE_VIDEO
+                        && (*(**s).codecpar).color_range != av::AVCOL_RANGE_UNSPECIFIED
+                })
+            {
+                // Preserve a known range even when the encoder omits otherwise unspecified VUI.
+                check(av::av_opt_set(
+                    (*self.0).priv_data,
+                    c"movflags".as_ptr(),
+                    c"+write_colr".as_ptr(),
+                    0,
+                ))?;
+            }
+            check(av::avio_open2(
+                &mut (*self.0).pb,
+                cs(path)?.as_ptr(),
+                av::AVIO_FLAG_WRITE as i32,
+                &(*self.0).interrupt_callback,
+                ptr::null_mut(),
+            ))?;
+            check(av::avformat_write_header(self.0, ptr::null_mut()))
+        }
+    }
     fn finish(&self) -> Result<()> {
         unsafe {
             let trailer = av::av_write_trailer(self.0);
@@ -167,6 +223,9 @@ pub(crate) fn transcode(
     path: &str,
     op: &Operation,
 ) -> Result<()> {
+    let ProcessingParameters::Transcode { video: parameters } = &plan.parameters else {
+        return Err("transcode parameters required".into());
+    };
     unsafe {
         let vi = plan
             .stream_map
@@ -190,11 +249,11 @@ pub(crate) fn transcode(
             (av::AV_EF_CRCCHECK | av::AV_EF_BITSTREAM | av::AV_EF_BUFFER | av::AV_EF_EXPLODE)
                 as i32;
         check(av::avcodec_open2(decoder.0, dc, ptr::null_mut()))?;
-        let ec = av::avcodec_find_encoder_by_name(cs(&plan.parameters.encoder)?.as_ptr());
+        let ec = av::avcodec_find_encoder_by_name(cs(&parameters.encoder)?.as_ptr());
         let encoder = codec(ec)?;
-        (*encoder.0).width = plan.parameters.width;
-        (*encoder.0).height = plan.parameters.height;
-        (*encoder.0).pix_fmt = av::av_get_pix_fmt(cs(&plan.parameters.pixel_format)?.as_ptr());
+        (*encoder.0).width = parameters.width;
+        (*encoder.0).height = parameters.height;
+        (*encoder.0).pix_fmt = av::av_get_pix_fmt(cs(&parameters.pixel_format)?.as_ptr());
         (*encoder.0).time_base = (*vs).time_base;
         (*encoder.0).framerate = av::av_guess_frame_rate(input.0, vs, ptr::null_mut());
         (*encoder.0).sample_aspect_ratio = av::AVRational { num: 1, den: 1 };
@@ -205,27 +264,21 @@ pub(crate) fn transcode(
         (*encoder.0).thread_count = grant.threads as i32;
         // MP4 needs the final frame's duration to retain it in the presentation timeline.
         (*encoder.0).flags |= av::AV_CODEC_FLAG_FRAME_DURATION as i32;
-        let mut out = ptr::null_mut();
-        check(av::avformat_alloc_output_context2(
-            &mut out,
-            ptr::null(),
-            cs(&plan.parameters.container)?.as_ptr(),
-            cs(path)?.as_ptr(),
-        ))?;
-        let output = Output(out);
+        let output = Output::new(plan, path, input, op)?;
+        let out = output.0;
         if (*(*out).oformat).flags & av::AVFMT_GLOBALHEADER as i32 != 0 {
             (*encoder.0).flags |= av::AV_CODEC_FLAG_GLOBAL_HEADER as i32;
         }
         check(av::av_opt_set(
             (*encoder.0).priv_data,
             c"crf".as_ptr(),
-            cs(&plan.parameters.crf.to_string())?.as_ptr(),
+            cs(&parameters.crf.to_string())?.as_ptr(),
             0,
         ))?;
         check(av::av_opt_set(
             (*encoder.0).priv_data,
             c"preset".as_ptr(),
-            cs(&plan.parameters.preset)?.as_ptr(),
+            cs(&parameters.preset)?.as_ptr(),
             0,
         ))?;
         check(av::avcodec_open2(encoder.0, ec, ptr::null_mut()))?;
@@ -238,6 +291,8 @@ pub(crate) fn transcode(
             encoder.0,
         ))?;
         (*ov).time_base = (*vs).time_base;
+        (*ov).disposition = (*vs).disposition;
+        check(av::av_dict_copy(&mut (*ov).metadata, (*vs).metadata, 0))?;
         let oa = if let Some(ai) = audio_idx {
             let a = av::avformat_new_stream(out, ptr::null());
             if a.is_null() {
@@ -249,16 +304,17 @@ pub(crate) fn transcode(
             ))?;
             (*(*a).codecpar).codec_tag = 0;
             (*a).time_base = (*streams(input)[ai]).time_base;
+            (*a).disposition = (*streams(input)[ai]).disposition;
+            check(av::av_dict_copy(
+                &mut (*a).metadata,
+                (*streams(input)[ai]).metadata,
+                0,
+            ))?;
             Some(a)
         } else {
             None
         };
-        check(av::avio_open(
-            &mut (*out).pb,
-            cs(path)?.as_ptr(),
-            av::AVIO_FLAG_WRITE as i32,
-        ))?;
-        check(av::avformat_write_header(out, ptr::null_mut()))?;
+        output.open(path)?;
         let pkt = packet()?;
         let encoded = packet()?;
         let frame = frame()?;
@@ -370,7 +426,133 @@ pub(crate) fn transcode(
         check(av::avcodec_send_frame(encoder.0, ptr::null()))?;
         drain_encoder()?;
         output.finish()?;
-        drop(output);
         Ok(())
+    }
+}
+
+pub(crate) fn remux(
+    input: &Input,
+    media: &MediaFacts,
+    plan: &ExecutionPlan,
+    grant: &ResourceGrant,
+    path: &str,
+    op: &Operation,
+) -> Result<()> {
+    unsafe {
+        let vi = media
+            .tracks
+            .iter()
+            .find(|t| t.kind == "video")
+            .ok_or("video required")?
+            .index as usize;
+        let vs = streams(input)[vi];
+        let vp = &*(*vs).codecpar;
+        let dc = av::avcodec_find_decoder(vp.codec_id);
+        let decoder = codec(dc)?;
+        check(av::avcodec_parameters_to_context(decoder.0, (*vs).codecpar))?;
+        (*decoder.0).pkt_timebase = (*vs).time_base;
+        (*decoder.0).thread_count = grant.threads as i32;
+        (*decoder.0).err_recognition =
+            (av::AV_EF_CRCCHECK | av::AV_EF_BITSTREAM | av::AV_EF_BUFFER | av::AV_EF_EXPLODE)
+                as i32;
+        check(av::avcodec_open2(decoder.0, dc, ptr::null_mut()))?;
+        let output = Output::new(plan, path, input, op)?;
+        for mapping in &plan.stream_map {
+            let source = streams(input)[mapping.input as usize];
+            let target = av::avformat_new_stream(output.0, ptr::null());
+            if target.is_null() {
+                return Err("stream allocation failed".into());
+            }
+            check(av::avcodec_parameters_copy(
+                (*target).codecpar,
+                (*source).codecpar,
+            ))?;
+            (*(*target).codecpar).codec_tag = 0;
+            (*target).time_base = (*source).time_base;
+            (*target).avg_frame_rate = (*source).avg_frame_rate;
+            (*target).disposition = (*source).disposition;
+            check(av::av_dict_copy(
+                &mut (*target).metadata,
+                (*source).metadata,
+                0,
+            ))?;
+        }
+        output.open(path)?;
+        let packet = packet()?;
+        let frame = frame()?;
+        let drain = || -> Result<()> {
+            loop {
+                op.check().map_err(|e| e.message)?;
+                let n = av::avcodec_receive_frame(decoder.0, frame.0);
+                if n == -35 || n == -11 || n == av::AVERROR_EOF {
+                    break;
+                }
+                check(n)?;
+                // Copying packets still requires checking that the source video decodes intact.
+                if (*frame.0).decode_error_flags != 0
+                    || (*frame.0).flags & av::AV_FRAME_FLAG_CORRUPT as i32 != 0
+                    || (*frame.0).format != av::AV_PIX_FMT_YUV420P
+                    || (*frame.0).width != vp.width
+                    || (*frame.0).height != vp.height
+                    || (*frame.0).color_primaries != vp.color_primaries
+                    || (*frame.0).color_trc != vp.color_trc
+                    || (*frame.0).colorspace != vp.color_space
+                    || (*frame.0).color_range != vp.color_range
+                {
+                    return Err("视频帧损坏或媒体参数发生变化".into());
+                }
+                av::av_frame_unref(frame.0);
+            }
+            Ok(())
+        };
+        loop {
+            op.check().map_err(|e| e.message)?;
+            let n = av::av_read_frame(input.0, packet.0);
+            if n == av::AVERROR_EOF {
+                break;
+            }
+            check(n)?;
+            if (*packet.0).flags & av::AV_PKT_FLAG_CORRUPT as i32 != 0 {
+                return Err("数据包损坏".into());
+            }
+            let mapping = plan
+                .stream_map
+                .iter()
+                .find(|m| m.input as i32 == (*packet.0).stream_index)
+                .ok_or("unmapped stream")?;
+            let source = streams(input)[mapping.input as usize];
+            if mapping.input as usize == vi {
+                check(av::avcodec_send_packet(decoder.0, packet.0))?;
+                drain()?;
+                if (*packet.0).pts == av::AV_NOPTS_VALUE {
+                    return Err("视频数据包缺少时间戳".into());
+                }
+                let time = av::av_rescale_q(
+                    (*packet.0).pts - (*source).start_time,
+                    (*source).time_base,
+                    av::AVRational {
+                        num: 1,
+                        den: 1_000_000,
+                    },
+                );
+                op.progress(
+                    "running",
+                    Some(
+                        (time as f64 / *media.duration_us.get().ok_or("duration unknown")? as f64)
+                            .clamp(0.0, 0.98),
+                    ),
+                    Some(time),
+                );
+            }
+            let target = *(*output.0).streams.add(mapping.output as usize);
+            av::av_packet_rescale_ts(packet.0, (*source).time_base, (*target).time_base);
+            (*packet.0).stream_index = mapping.output as i32;
+            (*packet.0).pos = -1;
+            check(av::av_interleaved_write_frame(output.0, packet.0))?;
+            av::av_packet_unref(packet.0);
+        }
+        check(av::avcodec_send_packet(decoder.0, ptr::null()))?;
+        drain()?;
+        output.finish()
     }
 }

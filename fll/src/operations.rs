@@ -1,7 +1,7 @@
 use crate::{Operation, analysis, backends::libav, planning, source, validation};
 use fll_contracts::*;
 use std::path::Path;
-pub(crate) fn compress(
+pub(crate) fn execute(
     input: &str,
     temp: &str,
     media: &MediaFacts,
@@ -43,8 +43,13 @@ pub(crate) fn compress(
     }
     let opened = libav::Input::open(input, op)
         .map_err(|e| MediaError::new("media_unreadable", "execute", e))?;
-    libav::transcode(&opened, &actual, plan, grant, temp, op)
-        .map_err(|e| MediaError::new("encode_failed", "execute", e))?;
+    match &plan.parameters {
+        ProcessingParameters::Transcode { .. } => {
+            libav::transcode(&opened, &actual, plan, grant, temp, op)
+        }
+        ProcessingParameters::Remux {} => libav::remux(&opened, &actual, plan, grant, temp, op),
+    }
+    .map_err(|e| MediaError::new("processing_failed", "execute", e))?;
     drop(opened);
     op.check()?;
     op.progress("validating", None, None);

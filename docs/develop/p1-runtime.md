@@ -1,5 +1,7 @@
 # P1 运行与接口 / v3
 
+本文记录 P1 v3 基线；当前 P2 接口见 [HTTP v4 / FLL JSON 3](p2-runtime.md)。
+
 当前实现采用 HTTP v3、FLL C ABI 1、媒体 JSON schema 2、数据库 user_version 2。CLI 与 Flutter 同步升级。旧 Worker 需要正式退出后再启动新版；旧 HTTP 接口返回 protocol_mismatch。数据库路径沿用 `data-v2/framelean-v2.sqlite3`，文件名中的 v2 是产品数据域，与 SQLite user_version 分开。
 
 ## 模块边界

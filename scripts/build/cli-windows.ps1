@@ -15,5 +15,15 @@ New-Item -ItemType Directory -Force $runtime | Out-Null
 Copy-Item fengine/target/release/framelean.exe,fengine/target/release/framelean-engine.exe $runtime
 Copy-Item fll/target/release/framelean_fll.dll $runtime
 Copy-Item (Join-Path $FFmpegRoot 'bin/*.dll') $runtime
-& (Join-Path $runtime 'framelean-engine.exe') probe (Join-Path (Resolve-Path $runtime).Path 'framelean_fll.dll'); Check-Native
+$probe = & (Join-Path $runtime 'framelean-engine.exe') probe (Join-Path (Resolve-Path $runtime).Path 'framelean_fll.dll'); Check-Native
+$component = $probe | ConvertFrom-Json
+if ($component.abi_version -ne 1 -or $component.json_version -ne 3 -or
+    -not $component.capabilities.h264_encoder -or
+    $component.capabilities.video_decoders -notcontains 'h264' -or
+    $component.capabilities.video_decoders -notcontains 'hevc' -or
+    $component.capabilities.output_containers -notcontains 'mp4' -or
+    $component.capabilities.output_containers -notcontains 'mkv') {
+    throw 'P2 requires ABI 1 / JSON 3, H264 and HEVC decoders, libx264, MP4 and Matroska muxers'
+}
+Write-Output $probe
 Write-Output "CLI bundle: $runtime (copy the entire directory)"

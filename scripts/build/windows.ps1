@@ -7,6 +7,7 @@ Push-Location desktop-client
 try { flutter build windows --release; Check-Native } finally { Pop-Location }
 $bundle = 'desktop-client/build/windows/x64/runner/Release'
 $runtime = Join-Path $bundle 'runtime'
+if (Test-Path $runtime) { Remove-Item $runtime -Recurse -Force }
 New-Item -ItemType Directory -Force $runtime | Out-Null
 Copy-Item outputs/cli-windows/* $runtime -Force
 & (Join-Path $runtime 'framelean-engine.exe') probe (Join-Path (Resolve-Path $runtime).Path 'framelean_fll.dll'); Check-Native

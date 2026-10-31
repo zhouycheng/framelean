@@ -29,12 +29,20 @@ enum Action {
     Options {
         #[arg(required = true)]
         analysis_ids: Vec<String>,
+        #[arg(long, default_value = "compress", value_parser = ["compress", "convert"])]
+        operation: String,
+        #[arg(long)]
+        format: Option<String>,
     },
     Plan {
         #[arg(required = true)]
         analysis_ids: Vec<String>,
         #[arg(long)]
         preset: Option<String>,
+        #[arg(long, default_value = "compress", value_parser = ["compress", "convert"])]
+        operation: String,
+        #[arg(long, default_value = "mp4")]
+        format: String,
     },
     Compress {
         files: Vec<PathBuf>,
@@ -44,6 +52,19 @@ enum Action {
         output: PathBuf,
         #[arg(long)]
         preset: Option<String>,
+        #[arg(long)]
+        wait: bool,
+        #[arg(long, default_value = "mp4")]
+        format: String,
+    },
+    Convert {
+        files: Vec<PathBuf>,
+        #[arg(long = "analysis-id", conflicts_with = "files")]
+        analysis_ids: Vec<String>,
+        #[arg(short, long)]
+        output: PathBuf,
+        #[arg(long)]
+        format: String,
         #[arg(long)]
         wait: bool,
     },
@@ -153,11 +174,35 @@ fn wait_analysis(client: &Client, analysis_ids: &[String]) -> Result<Value> {
         thread::sleep(Duration::from_millis(300));
     }
 }
-fn prepare(client: &Client, analysis_ids: &[String], preset: Option<&str>) -> Result<Value> {
-    let options = client.call("options", Some(json!({"analysis_ids":analysis_ids})))?;
+fn prepare(
+    client: &Client,
+    analysis_ids: &[String],
+    operation: &str,
+    format: &str,
+    preset: Option<&str>,
+) -> Result<Value> {
+    let intent = json!({"operation":operation,"preservation":"preserve"});
+    let options = client.call(
+        "options",
+        Some(json!({"analysis_ids":analysis_ids,"intent":intent,"format":format})),
+    )?;
     let choices = options["available_choices"]
         .as_array()
         .ok_or_else(|| Error::new("response_invalid", "cli", "缺少可用选项"))?;
+    let preset = preset.map(|requested| {
+        options["presets"]
+            .as_array()
+            .and_then(|presets| {
+                presets.iter().find(|p| {
+                    p["id"] == requested
+                        || p["aliases"]
+                            .as_array()
+                            .is_some_and(|a| a.iter().any(|v| v == requested))
+                })
+            })
+            .and_then(|p| p["id"].as_str())
+            .unwrap_or(requested)
+    });
     let selection = choices
         .iter()
         .find(|c| preset.is_none_or(|p| c["preset"].as_str() == Some(p)))
@@ -168,7 +213,7 @@ fn prepare(client: &Client, analysis_ids: &[String], preset: Option<&str>) -> Re
         })?;
     let plans = client.call(
         "plan",
-        Some(json!({"analysis_ids":analysis_ids,"selection":selection})),
+        Some(json!({"analysis_ids":analysis_ids,"selection":selection,"intent":intent})),
     )?;
     if plans["items"]
         .as_array()
@@ -266,20 +311,33 @@ fn run(args: &Args) -> Result<Value> {
                 Ok(accepted)
             }
         }
-        Action::Options { analysis_ids } => {
-            client.call("options", Some(json!({"analysis_ids":analysis_ids})))
+        Action::Options { analysis_ids, operation, format } => {
+            client.call("options", Some(json!({"analysis_ids":analysis_ids,"intent":{"operation":operation,"preservation":"preserve"},"format":format})))
         }
         Action::Plan {
             analysis_ids,
             preset,
-        } => prepare(&client, analysis_ids, preset.as_deref()),
+            operation,
+            format,
+        } => prepare(&client, analysis_ids, operation, format, preset.as_deref()),
         Action::Compress {
             files,
             analysis_ids,
             output,
-            preset,
             wait,
+            ..
+        } | Action::Convert {
+            files,
+            analysis_ids,
+            output,
+            wait,
+            ..
         } => {
+            let (operation, format, preset) = match &args.command {
+                Action::Compress { format, preset, .. } => ("compress", format.as_str(), preset.as_deref()),
+                Action::Convert { format, .. } => ("convert", format.as_str(), None),
+                _ => unreachable!(),
+            };
             let analysis_ids = if !files.is_empty() {
                 let inputs = files
                     .iter()
@@ -300,7 +358,10 @@ fn run(args: &Args) -> Result<Value> {
                     "提供文件或 --analysis-id",
                 ));
             }
-            let plans = prepare(&client, &analysis_ids, preset.as_deref())?;
+            let plans = prepare(&client, &analysis_ids, operation, format, preset)?;
+            for item in plans["items"].as_array().unwrap() {
+                eprintln!("方案 {}：{} → {}", item["analysis_id"], item["result"]["parameters"]["mode"], item["result"]["output"]["container"]);
+            }
             let items=plans["items"].as_array().unwrap().iter().map(|p|json!({"analysis_id":p["analysis_id"],"intent":p["result"]["intent"],"selection":p["result"]["selection"],"expected_plan_digest":p["result"]["plan_digest"]})).collect::<Vec<_>>();
             let accepted = write(
                 &client,

@@ -1,5 +1,7 @@
 # FLL / Worker 内部落地与 CLI MVP 验证
 
+本文为 HTTP v3 历史验收；当前版本和复现命令见 [P1 收尾与 P2 验证](p2-validation.md)。
+
 日期：2026-10-31。分支：develop/next。固定压缩能力、FLL / Worker 分层及 CLI 已完成本机链路验证；Windows 单独待验。
 
 ## 已实现

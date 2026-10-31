@@ -32,6 +32,7 @@ class ProcessingPage extends StatefulWidget {
 class _Page extends State<ProcessingPage> {
   final model = ProcessingModel(EngineGateway());
   final selected = <String>{};
+  String? selectedPreset;
   static const channel = MethodChannel('framelean/lifecycle');
   static const labels = {
     'queued': '等待处理',
@@ -155,6 +156,8 @@ class _Page extends State<ProcessingPage> {
           .map((a) => a['id'] as String)
           .toSet();
       selected.removeWhere((id) => !ready.contains(id));
+      final presets = model.presetsFor(selected);
+      if (!presets.any((p) => p['id'] == selectedPreset)) selectedPreset = null;
       return Scaffold(
         appBar: AppBar(
           title: const Text('FrameLean · 批量压缩'),
@@ -252,23 +255,51 @@ class _Page extends State<ProcessingPage> {
                 child: const Text('更多媒体'),
               ),
             if (selected.isNotEmpty)
+              Row(
+                children: [
+                  const Text('压缩预设：'),
+                  DropdownButton<String>(
+                    value:
+                        selectedPreset ?? presets.firstOrNull?['id'] as String?,
+                    items: presets
+                        .map(
+                          (p) => DropdownMenuItem<String>(
+                            value: p['id'] as String,
+                            child: Text(p['label'] as String),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: model.submitting
+                        ? null
+                        : (value) => setState(() => selectedPreset = value),
+                  ),
+                ],
+              ),
+            if (selected.isNotEmpty)
               FilledButton(
-                onPressed: selected.isEmpty || model.submitting
+                onPressed: presets.isEmpty || model.submitting
                     ? null
                     : () async {
-                        await model.enqueue(selected.toList());
+                        await model.enqueue(
+                          selected.toList(),
+                          preset: selectedPreset,
+                        );
                         if (model.error == null && mounted) {
                           setState(selected.clear);
                         }
                       },
                 child: Text('将选中 ${selected.length} 项加入压缩队列'),
               ),
+            const Text('保持原尺寸和帧率。预设表示画质与体积取舍，输出可能大于原文件。'),
             const SizedBox(height: 24),
             Text('任务与执行历史', style: Theme.of(context).textTheme.titleLarge),
             for (final t in model.rows('tasks')) ...[
               Text(
                 '${t['input']}',
                 style: Theme.of(context).textTheme.titleMedium,
+              ),
+              Text(
+                '操作：${t['intent_json']?['operation'] ?? 'compress'} · 方案：${t['plan_json']?['parameters']?['mode'] ?? '历史方案'} · 输出：${t['plan_json']?['output']?['container'] ?? 'mp4'}',
               ),
               for (final e
                   in model

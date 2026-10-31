@@ -6,7 +6,7 @@ use crate::{
 use fll_contracts::*;
 use rusty_ffmpeg::ffi as av;
 use std::{ffi::CStr, path::Path, ptr};
-pub const ANALYZER: &str = "libav-probe-1";
+pub const ANALYZER: &str = "libav-probe-2";
 unsafe fn name(p: *const std::ffi::c_char) -> Fact<String> {
     if p.is_null() {
         Fact::unknown("not reported")
@@ -140,6 +140,34 @@ pub(crate) fn inspect(input: &Input, stamp: SourceStamp) -> MediaFacts {
                     } else {
                         None
                     },
+                    language: {
+                        let entry =
+                            av::av_dict_get(stream.metadata, c"language".as_ptr(), ptr::null(), 0);
+                        if entry.is_null() {
+                            None
+                        } else {
+                            let value = CStr::from_ptr((*entry).value)
+                                .to_string_lossy()
+                                .into_owned();
+                            if value == "und" || value.is_empty() {
+                                None
+                            } else {
+                                Some(value)
+                            }
+                        }
+                    },
+                    disposition: stream.disposition,
+                    side_data: (0..p.nb_coded_side_data)
+                        .map(|i| {
+                            let data = &*p.coded_side_data.add(i as usize);
+                            let value = av::av_packet_side_data_name(data.type_);
+                            if value.is_null() {
+                                format!("unknown:{}", data.type_)
+                            } else {
+                                CStr::from_ptr(value).to_string_lossy().into_owned()
+                            }
+                        })
+                        .collect(),
                 }
             })
             .collect::<Vec<_>>();
@@ -157,6 +185,8 @@ pub(crate) fn inspect(input: &Input, stamp: SourceStamp) -> MediaFacts {
                 Fact::unknown("duration not reported")
             },
             tracks,
+            chapter_count: context.nb_chapters,
+            program_count: context.nb_programs,
             warnings: vec![],
             facts_digest: String::new(),
         };

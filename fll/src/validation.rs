@@ -17,12 +17,15 @@ pub(crate) fn validate(
         };
     check(
         "container",
-        output
-            .container
-            .split(',')
-            .any(|c| c == plan.parameters.container),
-        json!(plan.parameters.container),
+        output.container.split(',').any(|c| c == plan.output.muxer),
+        json!(plan.output.muxer),
         json!(output.container),
+    );
+    check(
+        "extra_structures",
+        output.chapter_count == input.chapter_count && output.program_count == input.program_count,
+        json!([input.chapter_count, input.program_count]),
+        json!([output.chapter_count, output.program_count]),
     );
     check(
         "track_count",
@@ -53,6 +56,12 @@ pub(crate) fn validate(
             json!(b),
         );
         if let (Some(a), Some(b)) = (a, b) {
+            check(
+                "track_semantics",
+                a.language == b.language && (a.disposition & !1) == (b.disposition & !1),
+                json!([a.language, a.disposition & !1]),
+                json!([b.language, b.disposition & !1]),
+            );
             if let (Some(av), Some(bv)) = (&a.video, &b.video) {
                 check(
                     "display_size",
@@ -64,8 +73,8 @@ pub(crate) fn validate(
                 );
                 check(
                     "pixel_format",
-                    bv.pixel_format.get() == Some(&plan.parameters.pixel_format),
-                    json!(plan.parameters.pixel_format),
+                    bv.pixel_format.get().map(String::as_str) == Some("yuv420p"),
+                    json!("yuv420p"),
                     json!(bv.pixel_format),
                 );
                 check(

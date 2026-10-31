@@ -270,6 +270,19 @@ impl Coordinator {
         )?;
         if only.is_none() {
             let tx = self.db.transaction()?;
+            let queued = db::rows(
+                &tx,
+                "SELECT e.id,t.plan_json FROM execution_attempt e JOIN processing_task t ON t.id=e.task_id WHERE e.status='queued'",
+                [],
+            )?;
+            for row in queued {
+                if serde_json::from_value::<ExecutionPlan>(row["plan_json"].clone()).is_err()
+                    || row["plan_json"]["schema_version"] != fll_contracts::PLAN_VERSION
+                {
+                    tx.execute("UPDATE execution_attempt SET status='interrupted',error_json=?1,finished_at=unixepoch() WHERE id=?2 AND status='queued'",
+                        params![json!(Error::new("plan_required", "upgrade", "处理方案版本已变化，请重新分析并创建任务")).to_string(),row["id"].as_str()])?;
+                }
+            }
             tx.execute("UPDATE analysis SET status=CASE WHEN cancel_requested_at IS NULL THEN 'interrupted' ELSE 'canceled' END,error_json='{\"code\":\"interrupted\",\"message\":\"后台中断，请重新分析\"}' WHERE status='running'",[])?;
             tx.execute("UPDATE worker_state SET paused=1 WHERE EXISTS(SELECT 1 FROM analysis WHERE status='queued') OR EXISTS(SELECT 1 FROM execution_attempt WHERE status IN ('queued','running','validating','publishing','reconciling'))",[])?;
             db::bump(&tx)?;
@@ -704,14 +717,19 @@ impl Coordinator {
             db::rows(&self.db,"SELECT e.*,t.plan_json,t.output_directory,a.media_json,s.canonical_path AS input FROM execution_attempt e JOIN processing_task t ON t.id=e.task_id JOIN analysis a ON a.id=t.analysis_id JOIN media_source s ON s.id=a.source_id WHERE e.id=?1",[&id])?.remove(0)
         };
         let cached = if kind == "analyze" {
-            db::rows(&self.db,"SELECT a.media_json FROM analysis a JOIN media_source s ON s.id=a.source_id WHERE s.canonical_path=?1 AND a.status='succeeded' AND a.facts_schema=1 ORDER BY a.queue_order DESC LIMIT 1",[job["input"].as_str()])?.pop().map(|v|v["media_json"].clone())
+            db::rows(&self.db,"SELECT a.media_json FROM analysis a JOIN media_source s ON s.id=a.source_id WHERE s.canonical_path=?1 AND a.status='succeeded' AND a.facts_schema=?2 ORDER BY a.queue_order DESC LIMIT 1",params![job["input"].as_str(),fll_contracts::FACTS_VERSION])?.pop().map(|v|v["media_json"].clone())
         } else {
             None
         };
         let temp = if kind == "execute" {
+            let plan: ExecutionPlan = serde_json::from_value(job["plan_json"].clone())?;
+            let extension = &plan.output.extension;
+            if extension.is_empty() || !extension.bytes().all(|b| b.is_ascii_alphanumeric()) {
+                return Err(Error::new("invalid_output", "execute", "输出扩展名无效"));
+            }
             Some(
                 PathBuf::from(job["output_directory"].as_str().unwrap())
-                    .join(format!(".framelean-{id}.partial.mp4")),
+                    .join(format!(".framelean-{id}.partial.{extension}")),
             )
         } else {
             None
@@ -810,7 +828,14 @@ fn execute_job(
                 report: result["validation"].clone(),
             })?;
             publisher::fault("validating");
-            publisher::publish(&service, &id, path, &input, &cancel)
+            publisher::publish(
+                &service,
+                &id,
+                path,
+                &input,
+                &serde_json::from_value(job["plan_json"].clone())?,
+                &cancel,
+            )
         } else {
             Ok(result)
         }

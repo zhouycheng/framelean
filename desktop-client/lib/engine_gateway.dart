@@ -20,7 +20,7 @@ class EngineGateway {
         _endpoint = jsonDecode(
           await File('$runtimeDirectory/endpoint.json').readAsString(),
         ) as Map<String, dynamic>;
-        if (_endpoint!['protocol_version'] != 3) {
+        if (_endpoint!['protocol_version'] != 4) {
           throw const FormatException('Worker 协议不兼容，请先退出旧版本后台');
         }
         final url = Uri.parse(_endpoint!['url'] as String);
@@ -28,7 +28,7 @@ class EngineGateway {
           throw const FormatException('Worker 地址无效');
         }
         final health = await call('health');
-        if (health['protocol_version'] != 3) {
+        if (health['protocol_version'] != 4) {
           throw const FormatException('Worker 协议不兼容');
         }
         return true;
@@ -72,7 +72,7 @@ class EngineGateway {
     if (endpoint == null) throw const SocketException('尚未连接 Worker');
     final request = await _http.openUrl(
       body == null ? 'GET' : 'POST',
-      Uri.parse('${endpoint['url']}/v3/$name'),
+      Uri.parse('${endpoint['url']}/v4/$name'),
     );
     request.headers.set(
       HttpHeaders.authorizationHeader,
@@ -108,7 +108,7 @@ class EngineGateway {
         final snapshot = await call('snapshot');
         yield {'type': 'snapshot', 'data': snapshot};
         final request = await _http.getUrl(
-          Uri.parse('${_endpoint!['url']}/v3/events'),
+          Uri.parse('${_endpoint!['url']}/v4/events'),
         );
         request.headers.set('Last-Event-ID', snapshot['event_id'] as String);
         request.headers.set(

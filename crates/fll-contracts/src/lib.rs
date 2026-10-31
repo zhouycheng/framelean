@@ -4,10 +4,10 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 
 pub const ABI_VERSION: u32 = 1;
-pub const JSON_VERSION: u32 = 2;
-pub const HTTP_VERSION: u32 = 3;
-pub const FACTS_VERSION: u32 = 1;
-pub const PLAN_VERSION: u32 = 1;
+pub const JSON_VERSION: u32 = 3;
+pub const HTTP_VERSION: u32 = 4;
+pub const FACTS_VERSION: u32 = 2;
+pub const PLAN_VERSION: u32 = 2;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -95,6 +95,9 @@ pub struct TrackFacts {
     pub duration_us: Fact<i64>,
     pub video: Option<VideoFacts>,
     pub audio: Option<AudioFacts>,
+    pub language: Option<String>,
+    pub disposition: i32,
+    pub side_data: Vec<String>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct MediaFacts {
@@ -105,6 +108,8 @@ pub struct MediaFacts {
     pub container: String,
     pub duration_us: Fact<i64>,
     pub tracks: Vec<TrackFacts>,
+    pub chapter_count: u32,
+    pub program_count: u32,
     pub warnings: Vec<String>,
     pub facts_digest: String,
 }
@@ -113,7 +118,9 @@ pub struct Capabilities {
     pub json_version: u32,
     pub build: String,
     pub backend_versions: Value,
-    pub compression_ready: bool,
+    pub video_decoders: Vec<String>,
+    pub output_containers: Vec<String>,
+    pub h264_encoder: bool,
     pub capability_digest: String,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -146,7 +153,15 @@ pub struct Diagnostic {
 pub struct Choices {
     pub context_digest: String,
     pub available_choices: Vec<Selection>,
+    pub default_selection: Option<Selection>,
+    pub presets: Vec<Preset>,
     pub diagnostics: Vec<Diagnostic>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Preset {
+    pub id: String,
+    pub label: String,
+    pub aliases: Vec<String>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct StreamMap {
@@ -161,9 +176,20 @@ pub struct EncodingParameters {
     pub crf: u8,
     pub preset: String,
     pub pixel_format: String,
-    pub container: String,
     pub width: i32,
     pub height: i32,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "mode", rename_all = "snake_case", deny_unknown_fields)]
+pub enum ProcessingParameters {
+    Remux {},
+    Transcode { video: EncodingParameters },
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct OutputSpec {
+    pub container: String,
+    pub muxer: String,
+    pub extension: String,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ValidationRules {
@@ -188,7 +214,8 @@ pub struct ExecutionPlan {
     pub selection: Selection,
     pub stream_map: Vec<StreamMap>,
     pub steps: Vec<String>,
-    pub parameters: EncodingParameters,
+    pub parameters: ProcessingParameters,
+    pub output: OutputSpec,
     pub effects: Vec<String>,
     pub validation: ValidationRules,
     pub resource_hint: ResourceHint,

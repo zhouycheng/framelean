@@ -15,9 +15,9 @@ Future<void> until(bool Function() predicate) async {
 void main() {
   final sample = Platform.environment['FRAMELEAN_TEST_SAMPLE'];
   test(
-    'v3 real execution and model reconnect',
+    'v4 real execution and model reconnect',
     () async {
-      final output = await Directory.systemTemp.createTemp('framelean-v3-ui-');
+      final output = await Directory.systemTemp.createTemp('framelean-v4-ui-');
       var model = ProcessingModel(EngineGateway())..start();
       try {
         await until(
@@ -31,7 +31,7 @@ void main() {
         final id = model.rows('analyses').last['id'] as String;
         await until(() => model.canProcess(id));
         model.setOutput(output.path);
-        await model.enqueue([id]);
+        await model.enqueue([id], preset: 'quality');
         model.dispose();
         model = ProcessingModel(EngineGateway())..start();
         await until(
@@ -41,6 +41,10 @@ void main() {
           await File(model.rows('outputs').last['final_path'] as String)
               .exists(),
           true,
+        );
+        expect(
+          model.rows('tasks').last['plan_json']['parameters']['video']['crf'],
+          18,
         );
         await model.shutdown();
       } finally {

@@ -34,7 +34,7 @@ fn run(r: FllRequest, op: &Operation) -> Result<Value> {
         return Err(MediaError::new(
             "protocol_mismatch",
             "request",
-            "需要媒体 JSON schema 2",
+            "需要媒体 JSON schema 3",
         ));
     }
     if capabilities::snapshot().backend_versions["compatible"] != true {
@@ -61,7 +61,7 @@ fn run(r: FllRequest, op: &Operation) -> Result<Value> {
             media,
             plan,
             grant,
-        } => json!(operations::compress(
+        } => json!(operations::execute(
             &input, &temp, &media, &plan, &grant, op
         )?),
     };

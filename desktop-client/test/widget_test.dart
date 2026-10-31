@@ -13,6 +13,7 @@ class FakeGateway extends EngineGateway {
     'paused': true,
   };
   String status = 'queued';
+  Map<String, dynamic>? submitted;
   @override
   Stream<Map<String, dynamic>> events() => controller.stream;
   @override
@@ -30,15 +31,25 @@ class FakeGateway extends EngineGateway {
       };
     }
     if (name == 'options') {
+      expect(body?['format'], 'mp4');
+      final choices = [
+        {'preset': 'balanced', 'container': 'mp4'},
+        {'preset': 'quality', 'container': 'mp4'},
+        {'preset': 'small', 'container': 'mp4'},
+      ];
+      final presets = [
+        {'id': 'balanced', 'label': '均衡'},
+        {'id': 'quality', 'label': '画质优先'},
+        {'id': 'small', 'label': '体积优先'},
+      ];
       return {
+        'available_choices': choices,
+        'default_selection': choices.first,
+        'presets': presets,
         'items': [
           {
             'analysis_id': 'supported',
-            'result': {
-              'available_choices': [
-                {'preset': 'h264_crf23', 'container': 'mp4'},
-              ],
-            },
+            'result': {'available_choices': choices, 'presets': presets},
           },
           {
             'analysis_id': 'hdr',
@@ -50,6 +61,26 @@ class FakeGateway extends EngineGateway {
             },
           },
         ],
+      };
+    }
+    if (name == 'plan') {
+      return {
+        'items': [
+          {
+            'analysis_id': 'supported',
+            'result': {
+              'selection': body!['selection'],
+              'intent': {'operation': 'compress', 'preservation': 'preserve'},
+              'plan_digest': 'digest',
+            },
+          },
+        ],
+      };
+    }
+    if (name == 'execute') {
+      submitted = body;
+      return {
+        'task_ids': ['t'],
       };
     }
     if (name.startsWith('tasks?')) {
@@ -73,7 +104,24 @@ class FakeGateway extends EngineGateway {
 }
 
 void main() {
-  test('v3 reconnect, stale progress, hidden unsupported choices and restart projection', () async {
+  test(
+    'valid preset selection is submitted and unavailable choice is blocked',
+    () async {
+      final gateway = FakeGateway();
+      final model = ProcessingModel(gateway);
+      await model.loadAnalyses();
+      expect(model.presetsFor(['supported']).length, 3);
+      expect(model.presetsFor(['supported', 'hdr']), isEmpty);
+      await model.enqueue(['supported'], preset: 'quality');
+      expect(gateway.submitted!['items'][0]['selection']['preset'], 'quality');
+      gateway.submitted = null;
+      await model.enqueue(['supported'], preset: 'unknown');
+      expect(gateway.submitted, isNull);
+      expect(model.error, contains('预设已不可用'));
+      model.dispose();
+    },
+  );
+  test('v4 reconnect, stale progress, hidden unsupported choices and restart projection', () async {
     final gateway = FakeGateway();
     final model = ProcessingModel(gateway)..start();
     gateway.controller.add({'type': 'snapshot', 'data': gateway.state});

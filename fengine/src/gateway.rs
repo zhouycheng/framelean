@@ -51,11 +51,11 @@ pub fn handle(service: Arc<Service>, mut req: Request) {
     }
     let url = req.url().to_owned();
     let (path, query) = url.split_once('?').unwrap_or((&url, ""));
-    let Some(name) = path.strip_prefix("/v3/") else {
+    let Some(name) = path.strip_prefix("/v4/") else {
         reply(
             req,
             404,
-            json!({"error":Error::new("protocol_mismatch","gateway","需要 Worker 协议 v3")}),
+            json!({"error":Error::new("protocol_mismatch","gateway","需要 Worker 协议 v4")}),
         );
         return;
     };
@@ -299,24 +299,39 @@ fn source_observation(a: &Value, facts: &MediaFacts) -> Result<()> {
     Ok(())
 }
 fn evaluate(service: &Service, name: &str, body: &Value) -> Result<Value> {
+    let format = body
+        .get("format")
+        .filter(|v| !v.is_null())
+        .map(|v| {
+            v.as_str()
+                .ok_or_else(|| Error::new("invalid_format", "planning", "目标格式需要字符串"))
+        })
+        .transpose()?;
     if !service.ready.load(Ordering::SeqCst) {
         return Err(Error::new("worker_not_ready", "planning", "后台尚未就绪"));
     }
     let c = repository::read(&service.config.database)?;
     let mut items = vec![];
     let mut common: Option<Vec<Selection>> = None;
+    let mut presets = json!([]);
     for id in array(body, "analysis_ids")? {
         let aid = id
             .as_str()
             .ok_or_else(|| Error::new("analysis_id", "planning", "分析 ID 无效"))?;
         let result = (|| -> Result<Value> {
             let facts = media(&queries::analysis(&c, aid)?)?;
-            let options = service.query_fll(FllCommand::Options {
+            let mut options = service.query_fll(FllCommand::Options {
                 media: facts.clone(),
                 intent: intent(body)?,
             })?;
-            let choices: Vec<Selection> =
+            let mut choices: Vec<Selection> =
                 serde_json::from_value(options["available_choices"].clone())?;
+            if let Some(format) = format {
+                choices.retain(|c| c.container == format);
+            }
+            options["available_choices"] = json!(choices);
+            options["default_selection"] = json!(choices.first());
+            presets = options["presets"].clone();
             if let Some(shared) = &mut common {
                 shared.retain(|s| choices.contains(s));
             } else {
@@ -341,8 +356,9 @@ fn evaluate(service: &Service, name: &str, body: &Value) -> Result<Value> {
             }
         }
     }
+    let common = common.unwrap_or_default();
     Ok(
-        json!({"request_id":body["request_id"].as_str().map(str::to_owned).unwrap_or_else(crate::uid),"items":items,"available_choices":common.unwrap_or_default()}),
+        json!({"request_id":body["request_id"].as_str().map(str::to_owned).unwrap_or_else(crate::uid),"items":items,"default_selection":common.first(),"available_choices":common,"presets":presets}),
     )
 }
 fn parameter<'a>(query: &'a str, name: &str) -> Option<&'a str> {

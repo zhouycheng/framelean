@@ -15,6 +15,7 @@ pub fn publish(
     id: &str,
     temp: &Path,
     input: &str,
+    plan: &fll_contracts::ExecutionPlan,
     cancel: &AtomicBool,
 ) -> Result<Value> {
     let (size, hash, identity) = storage::hash(temp, cancel)?;
@@ -23,6 +24,15 @@ pub fn publish(
         .file_stem()
         .and_then(|s| s.to_str())
         .unwrap_or("video");
+    let action = if plan.intent.operation == "convert" {
+        "converted"
+    } else {
+        "compressed"
+    };
+    let extension = &plan.output.extension;
+    if extension.is_empty() || !extension.bytes().all(|b| b.is_ascii_alphanumeric()) {
+        return Err(Error::new("invalid_output", "publishing", "输出扩展名无效"));
+    }
     for number in 0..10000 {
         let suffix = if number == 0 {
             String::new()
@@ -32,7 +42,7 @@ pub fn publish(
         let final_path = temp
             .parent()
             .unwrap()
-            .join(format!("{stem}-compressed{suffix}.mp4"));
+            .join(format!("{stem}-{action}{suffix}.{extension}"));
         service.internal(Internal::Publishing {
             id: id.into(),
             path: final_path.to_string_lossy().into_owned(),
