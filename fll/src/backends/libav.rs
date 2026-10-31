@@ -86,6 +86,19 @@ impl Drop for Packet {
     }
 }
 struct Output(*mut av::AVFormatContext);
+impl Output {
+    fn finish(&self) -> Result<()> {
+        unsafe {
+            let trailer = av::av_write_trailer(self.0);
+            av::avio_flush((*self.0).pb);
+            let write = (*(*self.0).pb).error;
+            let close = av::avio_closep(&mut (*self.0).pb);
+            check(trailer)?;
+            check(write)?;
+            check(close)
+        }
+    }
+}
 impl Drop for Output {
     fn drop(&mut self) {
         unsafe {
@@ -356,7 +369,7 @@ pub(crate) fn transcode(
         drain_decoder()?;
         check(av::avcodec_send_frame(encoder.0, ptr::null()))?;
         drain_encoder()?;
-        check(av::av_write_trailer(out))?;
+        output.finish()?;
         drop(output);
         Ok(())
     }
